@@ -50,7 +50,7 @@ fun DraggablePendingImageItem(
     onDragEnd: (String?) -> Unit
 ) {
     // 固定尺寸配置
-    val imageSize = 70.dp
+    val imageSize = 85.dp
     val imageCornerRadius = 4.dp
     val density = LocalDensity.current
     // 记录图片中心点的全局位置

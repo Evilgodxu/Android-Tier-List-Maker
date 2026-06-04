@@ -66,7 +66,7 @@ fun PendingImagesSection(
     onPositionUpdate: ((Rect) -> Unit)? = null
 ) {
     // 固定尺寸配置
-    val imageSize = 70.dp
+    val imageSize = 85.dp
     val imageCornerRadius = 4.dp
     // 计算待放置区域的高度（基于图片尺寸）
     val pendingSectionHeight = (imageSize.value * 0.8f + 8f).dp
