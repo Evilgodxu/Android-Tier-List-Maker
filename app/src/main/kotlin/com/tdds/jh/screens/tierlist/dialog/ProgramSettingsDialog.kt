@@ -34,6 +34,23 @@ import kotlin.math.roundToInt
 /**
  * 程序设置对话框
  * 包含语言切换、字体设置、功能开关、浮显位置调节等设置项
+ *
+ * @param onDismiss 关闭对话框回调
+ * @param disableClickAdd 是否禁用点击添加图片功能
+ * @param onToggleDisableClickAdd 切换禁用点击添加回调
+ * @param floatOffsetX 浮动图片水平偏移量
+ * @param onFloatOffsetXChange 水平偏移量变化回调
+ * @param floatOffsetY 浮动图片垂直偏移量
+ * @param onFloatOffsetYChange 垂直偏移量变化回调
+ * @param externalBadgeEnabled 是否启用外部小图标
+ * @param onToggleExternalBadge 切换外部小图标回调
+ * @param followSystemTheme 是否跟随系统主题
+ * @param onToggleFollowSystemTheme 切换跟随系统主题回调
+ * @param onShowLanguageDialog 显示语言选择对话框回调
+ * @param disableCustomFont 是否禁用自定义字体
+ * @param onToggleDisableCustomFont 切换自定义字体回调
+ * @param nameBelowImage 是否在图片下方显示名称
+ * @param onToggleNameBelowImage 切换图片下方显示名称回调
  */
 @Composable
 fun ProgramSettingsDialog(

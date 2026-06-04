@@ -37,6 +37,16 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
 /**
  * 预览对话框
  * 显示生成的 tier list 图片预览,支持主题切换、保存和分享
+ *
+ * @param bitmap 待预览的图片
+ * @param isSaving 是否正在保存中
+ * @param isSharing 是否正在分享中
+ * @param onDismiss 关闭对话框回调
+ * @param onSave 保存图片回调
+ * @param onShare 分享图片回调
+ * @param onThemeToggle 主题切换回调
+ * @param isDarkTheme 预览是否使用深色主题
+ * @param appDarkTheme 应用当前是否为深色主题
  */
 @Composable
 fun PreviewDialog(

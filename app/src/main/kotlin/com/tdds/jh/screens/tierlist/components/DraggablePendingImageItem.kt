@@ -38,6 +38,14 @@ import kotlin.math.abs
 /**
  * 待添加区的图片项（拖动时原位置保持不动）
  * 支持垂直拖动到层级区域
+ *
+ * @param uri 图片 URI
+ * @param isDragging 是否正在拖动
+ * @param tiers 层级列表
+ * @param tierRowPositions 层级行位置映射，用于计算放置目标
+ * @param onDragStart 拖动开始回调，返回图片URI和中心偏移量
+ * @param onDrag 拖动中回调，返回当前中心点和目标层级
+ * @param onDragEnd 拖动结束回调，返回放置目标层级标签
  */
 @Composable
 fun DraggablePendingImageItem(

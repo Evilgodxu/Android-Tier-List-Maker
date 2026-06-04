@@ -83,6 +83,32 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 /**
  * 可滑动的层级行组件
  * 支持左右滑动删除、长按拖动排序、图片拖拽等功能
+ *
+ * @param modifier 修饰符
+ * @param tier 层级项数据
+ * @param isDragging 是否正在拖动排序
+ * @param images 该层级的图片列表
+ * @param pendingImages 待分级图片列表
+ * @param selectedImageForDrag 当前选中的拖动图片
+ * @param onTierClick 层级点击回调
+ * @param onTierLongClick 层级长按回调
+ * @param onTierDoubleClick 层级双击回调
+ * @param onAddImage 添加图片回调
+ * @param onImageClick 图片点击回调
+ * @param onImageLongClick 图片长按回调
+ * @param onImageDoubleClick 图片双击回调
+ * @param onDeleteTier 删除层级回调
+ * @param onPickImage 选择图片回调
+ * @param onPositionUpdate 位置更新回调
+ * @param disableClickAdd 是否禁用点击添加
+ * @param isDraggingPendingImage 是否有待分级图片正在拖动
+ * @param onMoveSelectedImageToTier 移动选中图片到当前层级回调
+ * @param tierRowPositions 层级行位置映射
+ * @param draggingTierImage 正在拖动的层级图片
+ * @param onTierImageDragStart 层级图片拖动开始回调
+ * @param onTierImageDrag 层级图片拖动中回调
+ * @param onTierImageDragEnd 层级图片拖动结束回调
+ * @param listState 列表状态，用于自动滚动
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

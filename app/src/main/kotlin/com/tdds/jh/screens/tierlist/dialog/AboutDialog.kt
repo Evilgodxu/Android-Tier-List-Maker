@@ -21,6 +21,9 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
 /**
  * 关于程序对话框
  * 显示应用信息、作者信息和开源许可
+ *
+ * @param onDismiss 关闭对话框回调
+ * @param context 上下文，用于打开外部链接
  */
 @Composable
 fun AboutDialog(

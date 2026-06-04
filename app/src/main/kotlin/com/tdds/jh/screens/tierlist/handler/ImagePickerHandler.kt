@@ -40,6 +40,9 @@ class ImagePickerHandler(
 
     /**
      * 处理初始图片选择结果（多选）
+     *
+     * @param uris 选择的图片URI列表
+     * @param currentPendingImages 当前待分级图片列表
      */
     fun handleImagePickerResult(
         uris: List<Uri>,
@@ -59,6 +62,9 @@ class ImagePickerHandler(
 
     /**
      * 处理添加到待分级区域的图片选择结果（多选）
+     *
+     * @param uris 选择的图片URI列表
+     * @param currentPendingImages 当前待分级图片列表
      */
     fun handleAddToPendingResult(
         uris: List<Uri>,
@@ -82,6 +88,9 @@ class ImagePickerHandler(
 
     /**
      * 处理图片替换结果（单选）
+     *
+     * @param uri 新选择的图片URI
+     * @param imageToReplace 需要被替换的图片
      */
     fun handleReplaceImageResult(
         uri: Uri?,
@@ -144,6 +153,11 @@ class ImagePickerHandler(
 
     /**
      * 处理小图标选择结果（单选）
+     *
+     * @param uri 选择的图片URI
+     * @param badgeSelectionTarget 小图标选择目标槽位（0表示添加到工作目录，1-3表示设置到对应槽位）
+     * @param imageForBadge 需要设置小图标的图片
+     * @param onBadgeDialogRefresh 刷新小图标对话框回调
      */
     fun handleBadgeImagePickerResult(
         uri: Uri?,
@@ -208,6 +222,9 @@ class ImagePickerHandler(
 
     /**
      * 处理批量小图标选择结果（多选）
+     *
+     * @param uris 选择的图片URI列表
+     * @param onBadgeDialogRefresh 刷新小图标对话框回调
      */
     fun handleBadgeImagePickerMultipleResult(
         uris: List<Uri>,
@@ -246,6 +263,11 @@ class ImagePickerHandler(
 
     /**
      * 处理图片导入（支持WebP转换和哈希查重）
+     *
+     * @param uris 选择的图片URI列表
+     * @param currentPendingImages 当前待分级图片列表
+     * @param isAppend 是否为追加模式
+     * @return 导入后的图片URI列表
      */
     private suspend fun processImageImport(
         uris: List<Uri>,

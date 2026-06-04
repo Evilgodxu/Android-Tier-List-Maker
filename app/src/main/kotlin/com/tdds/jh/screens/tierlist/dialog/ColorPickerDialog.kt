@@ -33,6 +33,10 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
 /**
  * HSV颜色选择器对话框
  * 使用双滑块设计,提供色相饱和度面板和亮度滑块
+ *
+ * @param currentColor 当前选中的颜色
+ * @param onDismiss 关闭对话框回调
+ * @param onConfirm 确认选择回调，返回选中的颜色
  */
 @Composable
 fun ColorPickerDialog(

@@ -51,6 +51,19 @@ import kotlin.math.hypot
 /**
  * 可拖动的层级图片组件
  * 支持点击、长按、双击和拖动操作
+ *
+ * @param image 层级图片数据
+ * @param index 图片索引位置
+ * @param isSelected 是否被选中
+ * @param isDragging 是否正在拖动
+ * @param onClick 点击回调
+ * @param onLongClick 长按回调
+ * @param onDoubleClick 双击回调
+ * @param onDragStart 拖动开始回调，返回图片中心偏移量
+ * @param onDrag 拖动中回调，返回当前中心点和目标层级
+ * @param onDragEnd 拖动结束回调，返回放置目标层级标签
+ * @param tierRowPositions 层级行位置映射，用于计算放置目标
+ * @param listState 列表状态，用于自动滚动
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

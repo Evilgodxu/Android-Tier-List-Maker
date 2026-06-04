@@ -35,6 +35,9 @@ class PackageOperationHandler(
 
     /**
      * 处理图包导出
+     *
+     * @param uri 导出目标URI
+     * @param packageItem 要导出的图包项
      */
     fun handleExportPackage(
         uri: Uri?,
@@ -77,6 +80,9 @@ class PackageOperationHandler(
 
     /**
      * 启动图包导出流程
+     *
+     * @param packageItem 要导出的图包项
+     * @param onLaunchExport 启动导出回调
      */
     fun startExportPackage(
         packageItem: PackageItem.Imported,
@@ -91,6 +97,10 @@ class PackageOperationHandler(
 
     /**
      * 处理从ZIP导入图片到待分级区域
+     *
+     * @param zipUri ZIP文件URI
+     * @param password ZIP密码（可选）
+     * @param currentPendingImages 当前待分级图片列表
      */
     fun handleImportZipToPending(
         zipUri: Uri?,

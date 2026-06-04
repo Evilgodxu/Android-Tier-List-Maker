@@ -48,6 +48,9 @@ class PresetOperationHandler(
 
     /**
      * 处理从文件选择器导入预设
+     *
+     * @param uri 预设文件URI
+     * @param currentPendingImages 当前待分级图片列表
      */
     fun handleImportPreset(
         uri: Uri?,
@@ -88,6 +91,9 @@ class PresetOperationHandler(
 
     /**
      * 处理从外部打开 .tdds 文件
+     *
+     * @param uri 外部传入的.tdds文件URI
+     * @param onSkipDraftRestore 跳过草稿恢复回调
      */
     fun handleExternalTddsFile(
         uri: Uri,

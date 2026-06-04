@@ -49,6 +49,12 @@ import kotlinx.coroutines.Dispatchers
 
 /**
  * 管理预设对话框
+ *
+ * @param onDismiss 关闭对话框回调
+ * @param onExportPreset 导出预设回调
+ * @param onImportPreset 导入预设回调
+ * @param onSavePreset 保存预设回调
+ * @param onManagePresetList 管理预设列表回调
  */
 @Composable
 fun ManagePresetsDialog(
@@ -157,6 +163,10 @@ fun LoadingDialog(message: String) {
 
 /**
  * 预设名称输入对话框
+ *
+ * @param defaultName 默认预设名称
+ * @param onDismiss 关闭对话框回调
+ * @param onConfirm 确认回调，返回输入的预设名称
  */
 @Composable
 fun PresetNameDialog(
@@ -246,6 +256,10 @@ fun DraftRestoreDialog(
 
 /**
  * 预设列表管理对话框
+ *
+ * @param presetManager 预设管理器实例
+ * @param onDismiss 关闭对话框回调
+ * @param onApplyPreset 应用预设回调
  */
 @Composable
 fun PresetListDialog(
@@ -402,6 +416,11 @@ fun PresetListDialog(
 /**
  * 导入预设覆盖确认对话框
  * 复用保存预设的交互逻辑，提供"覆盖"和"新建预设"选项
+ *
+ * @param presetName 已存在的预设名称
+ * @param onDismiss 关闭对话框回调
+ * @param onOverwrite 覆盖现有预设回调
+ * @param onCreateNew 创建新预设回调
  */
 @Composable
 fun ImportOverwriteDialog(

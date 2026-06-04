@@ -51,6 +51,11 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
 
 /**
  * 编辑层级名称对话框
+ *
+ * @param currentName 当前层级名称
+ * @param existingNames 已存在的层级名称列表，用于检测重复
+ * @param onDismiss 关闭对话框回调
+ * @param onConfirm 确认修改回调，返回新名称
  */
 @Composable
 fun EditTierNameDialog(
@@ -103,6 +108,10 @@ fun EditTierNameDialog(
 
 /**
  * 编辑标题对话框
+ *
+ * @param currentTitle 当前标题
+ * @param onDismiss 关闭对话框回调
+ * @param onConfirm 确认修改回调，返回新标题
  */
 @Composable
 fun EditTitleDialog(
@@ -139,6 +148,10 @@ fun EditTitleDialog(
 
 /**
  * 编辑作者对话框
+ *
+ * @param currentAuthor 当前作者名称
+ * @param onDismiss 关闭对话框回调
+ * @param onConfirm 确认修改回调，返回新作者名称
  */
 @Composable
 fun EditAuthorDialog(
