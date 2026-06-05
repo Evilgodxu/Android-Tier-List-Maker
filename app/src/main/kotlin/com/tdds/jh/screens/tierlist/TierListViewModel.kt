@@ -19,11 +19,15 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.net.toUri
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.PresetData
 import com.tdds.jh.data.tierlist.PresetManager
@@ -49,6 +53,7 @@ import java.io.File
 
 /**
  * ViewModel层：集中管理页面所有状态、Handler、Launcher和副作用
+ * 使用 rememberSaveable 保存关键状态，屏幕旋转时不丢失
  */
 @Stable
 class TierListViewModel(
@@ -57,24 +62,27 @@ class TierListViewModel(
     val settingsService: SettingsService,
     val presetManager: PresetManager,
     val defaultTiers: List<TierItem>,
+    initialSavedState: TierListSavedState? = null
 ) {
-    // ==================== 核心列表 ====================
-    val tiers = mutableStateListOf<TierItem>().apply { addAll(defaultTiers) }
-    val tierImages = mutableStateListOf<TierImage>()
+    // ==================== 核心列表（从 savedState 恢复或初始化） ====================
+    val tiers = initialSavedState?.tiers?.map { it.toTierItem() }?.toMutableStateList()
+        ?: mutableStateListOf<TierItem>().apply { addAll(defaultTiers) }
+    val tierImages = initialSavedState?.tierImages?.map { it.toTierImage() }?.toMutableStateList()
+        ?: mutableStateListOf<TierImage>()
 
-    // ==================== 对话框状态 ====================
+    // ==================== 对话框状态（使用 rememberSaveable） ====================
     val dialogState = DialogState()
 
-    // ==================== UI状态 ====================
-    var disableClickAdd by mutableStateOf(settingsService.disableClickAdd)
-    var floatOffsetX by mutableStateOf(settingsService.floatOffsetX)
-    var floatOffsetY by mutableStateOf(settingsService.floatOffsetY)
-    var externalBadgeEnabled by mutableStateOf(settingsService.externalBadgeEnabled)
-    var nameBelowImage by mutableStateOf(settingsService.nameBelowImage)
+    // ==================== UI状态（从 savedState 恢复或初始化） ====================
+    var disableClickAdd by mutableStateOf(initialSavedState?.disableClickAdd ?: settingsService.disableClickAdd)
+    var floatOffsetX by mutableStateOf(initialSavedState?.floatOffsetX ?: settingsService.floatOffsetX)
+    var floatOffsetY by mutableStateOf(initialSavedState?.floatOffsetY ?: settingsService.floatOffsetY)
+    var externalBadgeEnabled by mutableStateOf(initialSavedState?.externalBadgeEnabled ?: settingsService.externalBadgeEnabled)
+    var nameBelowImage by mutableStateOf(initialSavedState?.nameBelowImage ?: settingsService.nameBelowImage)
 
-    var pendingImages by mutableStateOf<List<Uri>>(emptyList())
-    var tierListTitle by mutableStateOf(context.getString(R.string.default_title))
-    var authorName by mutableStateOf("")
+    var pendingImages by mutableStateOf(initialSavedState?.pendingImages?.map { it.toUri() } ?: emptyList())
+    var tierListTitle by mutableStateOf(initialSavedState?.tierListTitle ?: context.getString(R.string.default_title))
+    var authorName by mutableStateOf(initialSavedState?.authorName ?: "")
 
     var selectedImageForDrag by mutableStateOf<TierImage?>(null)
     var draggingTierImage by mutableStateOf<TierImage?>(null)
@@ -119,10 +127,35 @@ class TierListViewModel(
     lateinit var presetExportLauncher: ManagedActivityResultLauncher<String, Uri?>
     lateinit var packageExportLauncher: ManagedActivityResultLauncher<String, Uri?>
 
+    /**
+     * 导出当前状态用于保存
+     */
+    fun exportSavedState(): TierListSavedState = TierListSavedState(
+        tiers = tiers.map { it.toState() },
+        tierImages = tierImages.map { it.toState() },
+        pendingImages = pendingImages.map { it.toString() },
+        tierListTitle = tierListTitle,
+        authorName = authorName,
+        disableClickAdd = disableClickAdd,
+        floatOffsetX = floatOffsetX,
+        floatOffsetY = floatOffsetY,
+        externalBadgeEnabled = externalBadgeEnabled,
+        nameBelowImage = nameBelowImage
+    )
+
 }
 
 /**
+ * ViewModel Saver 用于 rememberSaveable
+ */
+private val TierListViewModelSaver = Saver<TierListViewModel, TierListSavedState>(
+    save = { it.exportSavedState() },
+    restore = { null } // 恢复逻辑在工厂函数中处理
+)
+
+/**
  * ViewModel工厂函数
+ * 使用 rememberSaveable 保存关键状态，屏幕旋转时自动恢复
  */
 @Composable
 fun rememberTierListViewModel(
@@ -144,8 +177,18 @@ fun rememberTierListViewModel(
     val presetManager = remember { PresetManager(context) }
     val defaultTiers = TierListConfig.getDefaultTiers(context.resources.configuration.locales[0].language == "zh")
 
+    // 使用 rememberSaveable 保存和恢复状态
+    var savedState by rememberSaveable(stateSaver = TierListSavedStateSaver) {
+        mutableStateOf<TierListSavedState?>(null)
+    }
+
     val vm = remember {
-        TierListViewModel(context, scope, settingsService, presetManager, defaultTiers)
+        TierListViewModel(context, scope, settingsService, presetManager, defaultTiers, savedState)
+    }
+
+    // 当状态变化时保存到 savedState（用于屏幕旋转恢复）
+    LaunchedEffect(vm.tiers.size, vm.tierImages.size, vm.pendingImages.size, vm.tierListTitle, vm.authorName) {
+        savedState = vm.exportSavedState()
     }
 
     // ==================== 注入草稿控制回调 ====================

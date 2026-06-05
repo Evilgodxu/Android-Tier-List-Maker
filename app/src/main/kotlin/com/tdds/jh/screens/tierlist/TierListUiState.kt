@@ -2,16 +2,179 @@ package com.tdds.jh.screens.tierlist
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.net.toUri
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.model.tierlist.PresetOperation
+
+// ==================== Parcelable 数据类用于状态保存 ====================
+
+data class TierItemState(
+    val label: String,
+    val colorArgb: Int
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readInt()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(label)
+        parcel.writeInt(colorArgb)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<TierItemState> {
+        override fun createFromParcel(parcel: Parcel): TierItemState = TierItemState(parcel)
+        override fun newArray(size: Int): Array<TierItemState?> = arrayOfNulls(size)
+    }
+}
+
+data class TierImageState(
+    val id: String,
+    val tierLabel: String,
+    val uriString: String,
+    val originalUriString: String?,
+    val name: String?,
+    val badgeUriString: String?,
+    val badgeUri2String: String?,
+    val badgeUri3String: String?
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString(),
+        parcel.readString()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(id)
+        parcel.writeString(tierLabel)
+        parcel.writeString(uriString)
+        parcel.writeString(originalUriString)
+        parcel.writeString(name)
+        parcel.writeString(badgeUriString)
+        parcel.writeString(badgeUri2String)
+        parcel.writeString(badgeUri3String)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<TierImageState> {
+        override fun createFromParcel(parcel: Parcel): TierImageState = TierImageState(parcel)
+        override fun newArray(size: Int): Array<TierImageState?> = arrayOfNulls(size)
+    }
+}
+
+fun TierItem.toState() = TierItemState(label, color.toArgb())
+fun TierItemState.toTierItem() = TierItem(label, Color(colorArgb))
+fun TierImage.toState() = TierImageState(
+    id = id,
+    tierLabel = tierLabel,
+    uriString = uri.toString(),
+    originalUriString = originalUri?.toString(),
+    name = name.takeIf { it.isNotEmpty() },
+    badgeUriString = badgeUri?.toString(),
+    badgeUri2String = badgeUri2?.toString(),
+    badgeUri3String = badgeUri3?.toString()
+)
+fun TierImageState.toTierImage() = TierImage(
+    id = id,
+    tierLabel = tierLabel,
+    uri = uriString.toUri(),
+    name = name ?: "",
+    badgeUri = badgeUriString?.toUri(),
+    badgeUri2 = badgeUri2String?.toUri(),
+    badgeUri3 = badgeUri3String?.toUri(),
+    originalUri = originalUriString?.toUri()
+)
+
+/**
+ * 可保存的 UI 状态数据类
+ */
+data class TierListSavedState(
+    val tiers: List<TierItemState>,
+    val tierImages: List<TierImageState>,
+    val pendingImages: List<String>,
+    val tierListTitle: String,
+    val authorName: String,
+    val disableClickAdd: Boolean,
+    val floatOffsetX: Float,
+    val floatOffsetY: Float,
+    val externalBadgeEnabled: Boolean,
+    val nameBelowImage: Boolean
+) : Parcelable {
+    constructor(parcel: Parcel) : this(
+        parcel.createTypedArrayList(TierItemState.CREATOR) ?: emptyList(),
+        parcel.createTypedArrayList(TierImageState.CREATOR) ?: emptyList(),
+        parcel.createStringArrayList() ?: emptyList(),
+        parcel.readString() ?: "",
+        parcel.readString() ?: "",
+        parcel.readByte() != 0.toByte(),
+        parcel.readFloat(),
+        parcel.readFloat(),
+        parcel.readByte() != 0.toByte(),
+        parcel.readByte() != 0.toByte()
+    )
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeTypedList(tiers)
+        parcel.writeTypedList(tierImages)
+        parcel.writeStringList(pendingImages)
+        parcel.writeString(tierListTitle)
+        parcel.writeString(authorName)
+        parcel.writeByte(if (disableClickAdd) 1 else 0)
+        parcel.writeFloat(floatOffsetX)
+        parcel.writeFloat(floatOffsetY)
+        parcel.writeByte(if (externalBadgeEnabled) 1 else 0)
+        parcel.writeByte(if (nameBelowImage) 1 else 0)
+    }
+
+    override fun describeContents(): Int = 0
+
+    companion object CREATOR : Parcelable.Creator<TierListSavedState> {
+        override fun createFromParcel(parcel: Parcel): TierListSavedState = TierListSavedState(parcel)
+        override fun newArray(size: Int): Array<TierListSavedState?> = arrayOfNulls(size)
+    }
+}
+
+/**
+ * TierListSavedState 的 Saver 用于 rememberSaveable
+ */
+val TierListSavedStateSaver = Saver<TierListSavedState?, Bundle>(
+    save = { state ->
+        if (state == null) Bundle()
+        else Bundle().apply {
+            putParcelable("saved_state", state)
+        }
+    },
+    restore = { bundle ->
+        @Suppress("DEPRECATION")
+        bundle.getParcelable("saved_state")
+    }
+)
 
 /**
  * 对话框状态管理类
