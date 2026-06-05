@@ -202,7 +202,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        updateSystemBarsVisibility()
+        // post 到 decorView 确保在系统配置变更布局完成后再更新系统栏
+        // 否则 hide() 可能被系统的 transient show 覆盖
+        window.decorView.post {
+            updateSystemBarsVisibility()
+        }
         // 旋转后重新应用语言，防止 locale 被系统配置覆盖
         if (::languageManager.isInitialized) {
             val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
