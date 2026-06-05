@@ -107,7 +107,7 @@ fun PendingImagesSection(
             Column(
                 modifier = Modifier.padding(horizontal = 12.dp).padding(top = 4.dp, bottom = 4.dp)
             ) {
-                // 待分级角色标题、添加按钮和清空按钮
+                // 待分级图片标题、添加按钮和清空按钮
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,

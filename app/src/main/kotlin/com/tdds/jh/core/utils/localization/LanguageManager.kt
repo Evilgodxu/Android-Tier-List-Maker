@@ -2,6 +2,8 @@ package com.tdds.jh.core.utils.localization
 
 import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
+import android.os.LocaleList
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.compose.runtime.Composable
@@ -47,8 +49,39 @@ class LanguageManager(
 
     fun createLocalizedContext(locale: Locale): Context {
         val config = Configuration(context.resources.configuration)
-        config.setLocale(locale)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            config.setLocale(locale)
+        }
         return context.createConfigurationContext(config)
+    }
+
+    // 同步更新 App 层 Resources，使 Dialog 窗口继承正确的 locale
+    fun applyAppLocale(locale: Locale) {
+        val appConfig = Configuration(context.applicationContext.resources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            appConfig.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            appConfig.setLocale(locale)
+        }
+        @Suppress("DEPRECATION")
+        context.applicationContext.resources.updateConfiguration(appConfig, context.applicationContext.resources.displayMetrics)
+
+        val activityConfig = Configuration(context.resources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            activityConfig.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            activityConfig.setLocale(locale)
+        }
+        @Suppress("DEPRECATION")
+        context.resources.updateConfiguration(activityConfig, context.resources.displayMetrics)
+
+        @Suppress("DEPRECATION")
+        Locale.setDefault(locale)
     }
 }
 

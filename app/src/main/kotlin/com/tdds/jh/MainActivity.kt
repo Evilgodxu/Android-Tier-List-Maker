@@ -1,8 +1,11 @@
 package com.tdds.jh
 
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,6 +32,7 @@ import com.tdds.jh.ui.theme.ApplyStatusBarTheme
 import com.tdds.jh.ui.theme.MyApplicationTheme
 import com.tdds.jh.ui.theme.ThemeManager
 import com.tdds.jh.ui.theme.ThemeMode
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -45,6 +49,20 @@ class MainActivity : ComponentActivity() {
     }
     private lateinit var languageManager: LanguageManager
     private lateinit var themeManager: ThemeManager
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+        val languageCode = prefs.getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+        val locale = resolveLocale(languageCode)
+        val config = Configuration(newBase.resources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocales(LocaleList(locale))
+        } else {
+            @Suppress("DEPRECATION")
+            config.setLocale(locale)
+        }
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
 
     private fun skipDraftSaveTemporarily() {
         isSkippingDraftSave = true
@@ -80,6 +98,8 @@ class MainActivity : ComponentActivity() {
 
         val scope = lifecycleScope
         val appRes = resources
+        val savedLanguage = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
         setContent {
             // 首次启动语言检测
             LaunchedEffect(Unit) {
@@ -87,6 +107,10 @@ class MainActivity : ComponentActivity() {
                 if (firstLaunch) {
                     val systemLocale = appRes.configuration.locales[0]
                     val autoLanguage = matchSystemLanguage(systemLocale.language)
+                    getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+                        .edit().putString(KEY_LANGUAGE, autoLanguage).commit()
+                    // 更新 App 层 Resources 使首次启动即用正确语言
+                    languageManager.applyAppLocale(resolveLocale(autoLanguage))
                     userPreferencesRepository.setLanguage(autoLanguage)
                     userPreferencesRepository.setFirstLaunch(false)
                     userPreferencesRepository.setShowLanguageOnFirstLaunch(true)
@@ -95,7 +119,7 @@ class MainActivity : ComponentActivity() {
 
             val themeMode by userPreferencesRepository.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
             val disableCustomFont by userPreferencesRepository.disableCustomFont.collectAsStateWithLifecycle(initialValue = true)
-            val currentLanguage by userPreferencesRepository.language.collectAsStateWithLifecycle(initialValue = "system")
+            val currentLanguage by userPreferencesRepository.language.collectAsStateWithLifecycle(initialValue = savedLanguage)
 
             val systemDark = isSystemInDarkTheme()
             val isDarkTheme = themeManager.resolveDarkThemeStatic(themeMode, systemDark)
@@ -134,6 +158,9 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onLanguageChange = { languageCode ->
+                            getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+                                .edit().putString(KEY_LANGUAGE, languageCode).commit()
+                            languageManager.applyAppLocale(resolveLocale(languageCode))
                             scope.launch {
                                 userPreferencesRepository.setLanguage(languageCode)
                             }
@@ -202,6 +229,10 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        private const val SETTINGS_PREFS_NAME = "app_settings"
+        private const val KEY_LANGUAGE = "language"
+        private const val DEFAULT_LANGUAGE = "zh"
+
         fun matchSystemLanguage(systemLanguage: String): String {
             return when (systemLanguage) {
                 "zh" -> "zh"
@@ -215,6 +246,22 @@ class MainActivity : ComponentActivity() {
                 "ar" -> "ar"
                 "pt" -> "pt"
                 else -> "zh"
+            }
+        }
+
+        fun resolveLocale(languageCode: String): Locale {
+            return when (languageCode) {
+                "zh" -> Locale.SIMPLIFIED_CHINESE
+                "en" -> Locale.ENGLISH
+                "ja" -> Locale.JAPANESE
+                "ko" -> Locale.KOREAN
+                "ru" -> Locale.forLanguageTag("ru")
+                "de" -> Locale.GERMAN
+                "fr" -> Locale.FRENCH
+                "es" -> Locale.forLanguageTag("es")
+                "ar" -> Locale.forLanguageTag("ar")
+                "pt" -> Locale.forLanguageTag("pt")
+                else -> Locale.SIMPLIFIED_CHINESE
             }
         }
     }

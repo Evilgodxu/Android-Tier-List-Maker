@@ -204,7 +204,8 @@ fun TierListMakerApp(
                         if (vm.dialogState.isResetting) return@OutlinedButton
                         val currentDefaultTiers = TierListConfig.getDefaultTiers(resources.configuration.locales[0].language == "zh")
                         val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == currentDefaultTiers.size &&
-                                vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color }
+                                vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color } &&
+                                vm.tierListTitle == context.getString(R.string.default_title) && vm.authorName.isEmpty()
                         if (isDefault) return@OutlinedButton
                         vm.dialogState.isResetting = true
                         val imagesToReturn = vm.tierImages.map { it.originalUri ?: it.uri }
