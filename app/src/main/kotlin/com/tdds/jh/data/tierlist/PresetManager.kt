@@ -1655,14 +1655,12 @@ class PresetManager(private val context: Context) {
 
     /**
      * 清理草稿（单文件模式）
-     * 同时清理工作目录中的临时图片文件
+     * 仅删除草稿文件，不清理工作目录（工作目录存放当前会话的有效图片）
      */
     fun cleanupDraft() {
         if (draftFile.exists()) {
             draftFile.delete()
         }
-        // 清理工作目录中的临时图片文件
-        cleanupWorkImages()
     }
 
     /**
