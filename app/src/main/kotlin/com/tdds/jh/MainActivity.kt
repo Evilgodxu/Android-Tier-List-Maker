@@ -34,7 +34,6 @@ import com.tdds.jh.ui.adaptive.ProvideWindowSizeClass
 import com.tdds.jh.ui.theme.MyApplicationTheme
 import com.tdds.jh.ui.theme.ThemeManager
 import com.tdds.jh.ui.theme.ThemeMode
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -54,7 +53,7 @@ class MainActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
         val languageCode = prefs.getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
-        val locale = resolveLocale(languageCode)
+        val locale = LanguageManager.resolveLocale(languageCode)
         val config = Configuration(newBase.resources.configuration)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             config.setLocales(LocaleList(locale))
@@ -110,7 +109,7 @@ class MainActivity : ComponentActivity() {
                     getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
                         .edit().putString(KEY_LANGUAGE, autoLanguage).commit()
                     // 更新 App 层 Resources 使首次启动即用正确语言
-                    languageManager.applyAppLocale(resolveLocale(autoLanguage))
+                    languageManager.applyAppLocale(LanguageManager.resolveLocale(autoLanguage))
                     userPreferencesRepository.setLanguage(autoLanguage)
                     userPreferencesRepository.setFirstLaunch(false)
                     userPreferencesRepository.setShowLanguageOnFirstLaunch(true)
@@ -163,7 +162,7 @@ class MainActivity : ComponentActivity() {
                                 onLanguageChange = { languageCode ->
                                     getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
                                         .edit().putString(KEY_LANGUAGE, languageCode).commit()
-                                    languageManager.applyAppLocale(resolveLocale(languageCode))
+                                    languageManager.applyAppLocale(LanguageManager.resolveLocale(languageCode))
                                     scope.launch {
                                         userPreferencesRepository.setLanguage(languageCode)
                                     }
@@ -206,10 +205,14 @@ class MainActivity : ComponentActivity() {
     }
 
     fun exitAppWithCleanup() {
-        finishAffinity()
-        try {
-            saveDraftCallback?.invoke()
-        } catch (_: Exception) {
+        // 先保存草稿再退出，避免 finishAffinity 销毁 Activity 后无法保存
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    saveDraftCallback?.invoke()
+                }
+            } catch (_: Exception) { }
+            finishAffinity()
         }
     }
 
@@ -225,7 +228,7 @@ class MainActivity : ComponentActivity() {
         if (::languageManager.isInitialized) {
             val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
                 .getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
-            languageManager.applyAppLocale(resolveLocale(languageCode))
+            languageManager.applyAppLocale(LanguageManager.resolveLocale(languageCode))
         }
     }
 
@@ -260,22 +263,6 @@ class MainActivity : ComponentActivity() {
                 "ar" -> "ar"
                 "pt" -> "pt"
                 else -> "zh"
-            }
-        }
-
-        fun resolveLocale(languageCode: String): Locale {
-            return when (languageCode) {
-                "zh" -> Locale.SIMPLIFIED_CHINESE
-                "en" -> Locale.ENGLISH
-                "ja" -> Locale.JAPANESE
-                "ko" -> Locale.KOREAN
-                "ru" -> Locale.forLanguageTag("ru")
-                "de" -> Locale.GERMAN
-                "fr" -> Locale.FRENCH
-                "es" -> Locale.forLanguageTag("es")
-                "ar" -> Locale.forLanguageTag("ar")
-                "pt" -> Locale.forLanguageTag("pt")
-                else -> Locale.SIMPLIFIED_CHINESE
             }
         }
     }

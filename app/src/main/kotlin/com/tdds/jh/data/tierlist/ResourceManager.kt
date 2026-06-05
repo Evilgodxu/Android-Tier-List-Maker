@@ -2,16 +2,7 @@ package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -230,68 +221,6 @@ object ResourceManager {
         val isCleaning: Boolean = false
     ) {
         val totalTempSize: Long get() = details.totalSize
-    }
-
-    /**
-     * 创建资源管理状态
-     */
-    @Composable
-    fun rememberResourceState(
-        presetManager: PresetManager
-    ): Pair<ResourceState, ResourceActions> {
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-
-        var details by remember { mutableStateOf(ResourceUsageDetail()) }
-        var isCleaning by remember { mutableStateOf(false) }
-        var isCalculating by remember { mutableStateOf(true) }
-
-        // 计算存储使用情况
-        fun calculateSize() {
-            scope.launch {
-                isCalculating = true
-                withContext(Dispatchers.IO) {
-                    details = calculateResourceDetails(context, presetManager)
-                }
-                isCalculating = false
-            }
-        }
-
-        // 初始计算
-        androidx.compose.runtime.LaunchedEffect(Unit) {
-            calculateSize()
-        }
-
-        val state = ResourceState(
-            details = details,
-            isCalculating = isCalculating,
-            isCleaning = isCleaning
-        )
-
-        val actions = ResourceActions(
-            refreshSize = { calculateSize() },
-            cleanup = { onResettiermaster: () -> Unit, onComplete: () -> Unit ->
-                scope.launch {
-                    isCleaning = true
-                    try {
-                        cleanupResources(
-                            context = context,
-                            presetManager = presetManager,
-                            onResettiermaster = onResettiermaster,
-                            onComplete = onComplete
-                        )
-                    } catch (_: Exception) {
-                    }
-                    // 重新计算大小
-                    withContext(Dispatchers.IO) {
-                        details = calculateResourceDetails(context, presetManager)
-                    }
-                    isCleaning = false
-                }
-            }
-        )
-
-        return state to actions
     }
 
     /**

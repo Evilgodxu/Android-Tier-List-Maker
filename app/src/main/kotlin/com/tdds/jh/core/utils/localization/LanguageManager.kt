@@ -31,19 +31,21 @@ class LanguageManager(
         resolveLocale(languageCode)
     }
 
-    fun resolveLocale(languageCode: String): Locale {
-        return when (languageCode) {
-            "zh" -> Locale.SIMPLIFIED_CHINESE
-            "en" -> Locale.ENGLISH
-            "ja" -> Locale.JAPANESE
-            "ko" -> Locale.KOREAN
-            "ru" -> Locale.forLanguageTag("ru")
-            "de" -> Locale.GERMAN
-            "fr" -> Locale.FRENCH
-            "es" -> Locale.forLanguageTag("es")
-            "ar" -> Locale.forLanguageTag("ar")
-            "pt" -> Locale.forLanguageTag("pt")
-            else -> Locale.getDefault()
+    companion object {
+        fun resolveLocale(languageCode: String): Locale {
+            return when (languageCode) {
+                "zh" -> Locale.SIMPLIFIED_CHINESE
+                "en" -> Locale.ENGLISH
+                "ja" -> Locale.JAPANESE
+                "ko" -> Locale.KOREAN
+                "ru" -> Locale.forLanguageTag("ru")
+                "de" -> Locale.GERMAN
+                "fr" -> Locale.FRENCH
+                "es" -> Locale.forLanguageTag("es")
+                "ar" -> Locale.forLanguageTag("ar")
+                "pt" -> Locale.forLanguageTag("pt")
+                else -> Locale.getDefault()
+            }
         }
     }
 

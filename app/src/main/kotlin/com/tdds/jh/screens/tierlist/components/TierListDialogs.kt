@@ -40,6 +40,7 @@ import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.model.tierlist.TierListConfig
 import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.ImportTarget
@@ -81,7 +82,6 @@ import java.io.File
  * @param tierListTitle 标题
  * @param authorName 作者名
  * @param pendingImages 待分级图片
- * @param defaultTiers 默认层级
  * @param tierRowPositions 层级位置
  * @param disableClickAdd 禁用点击添加
  * @param floatOffsetX 浮动偏移X
@@ -126,7 +126,6 @@ fun TierListDialogs(
     tierListTitle: String,
     authorName: String,
     pendingImages: List<Uri>,
-    defaultTiers: List<TierItem>,
     tierRowPositions: Map<String, android.graphics.Rect>,
     disableClickAdd: Boolean,
     floatOffsetX: Float,
@@ -367,13 +366,15 @@ fun TierListDialogs(
             onDismiss = handlers::onResourceManageDismiss,
             presetManager = presetManager,
             onResettiermaster = {
+                val currentDefaultTiers = TierListConfig.getDefaultTiers(
+                    context.resources.configuration.locales[0].language == "zh"
+                )
                 handlers.onResetTierMaster(
-                    defaultTiers = defaultTiers,
                     onTitleReset = { onTitleChange(context.getString(R.string.default_title)) },
                     onAuthorReset = { onAuthorChange("") },
                     onTiersReset = {
                         tiers.clear()
-                        tiers.addAll(defaultTiers)
+                        tiers.addAll(currentDefaultTiers)
                         onTiersChange()
                     },
                     onTierImagesReset = onTierImagesChange,

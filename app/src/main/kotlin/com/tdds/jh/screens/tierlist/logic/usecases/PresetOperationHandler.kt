@@ -131,10 +131,22 @@ class PresetOperationHandler(
         }
     }
 
-    fun saveDraft(tierListTitle: String, authorName: String, currentPendingImages: List<Uri>) {
-        kotlinx.coroutines.runBlocking {
-            try { val presetData = presetManager.createPresetData(title = tierListTitle, author = authorName, tiers = tiers, tierImages = tierImages, pendingImages = currentPendingImages, cropPositionX = settingsService.cropPositionX, cropPositionY = settingsService.cropPositionY, customCropWidth = settingsService.customCropWidth, customCropHeight = settingsService.customCropHeight, useCustomCropSize = settingsService.useCustomCropSize, cropRatio = settingsService.cropRatio); presetManager.saveDraft(presetData) } catch (_: Exception) { }
-        }
+    suspend fun saveDraft(tierListTitle: String, authorName: String, currentPendingImages: List<Uri>) {
+        try {
+            val presetData = withContext(Dispatchers.IO) {
+                presetManager.createPresetData(
+                    title = tierListTitle, author = authorName, tiers = tiers,
+                    tierImages = tierImages, pendingImages = currentPendingImages,
+                    cropPositionX = settingsService.cropPositionX,
+                    cropPositionY = settingsService.cropPositionY,
+                    customCropWidth = settingsService.customCropWidth,
+                    customCropHeight = settingsService.customCropHeight,
+                    useCustomCropSize = settingsService.useCustomCropSize,
+                    cropRatio = settingsService.cropRatio
+                )
+            }
+            withContext(Dispatchers.IO) { presetManager.saveDraft(presetData) }
+        } catch (_: Exception) { }
     }
 
     fun handleExternalPresetImport(uri: Uri, onLoadingStateChange: (Boolean) -> Unit) {

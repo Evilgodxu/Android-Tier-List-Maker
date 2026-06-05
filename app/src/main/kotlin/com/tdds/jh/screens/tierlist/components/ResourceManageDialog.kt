@@ -21,9 +21,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,8 +39,63 @@ import androidx.compose.ui.window.Dialog
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.ResourceManager
+import com.tdds.jh.data.tierlist.ResourceUsageDetail
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import com.tdds.jh.ui.toast.showToastWithoutIcon
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+/**
+ * 创建资源管理状态（从 ResourceManager 提取到 UI 层）
+ */
+@Composable
+fun rememberResourceState(
+    presetManager: PresetManager
+): Pair<ResourceManager.ResourceState, ResourceManager.ResourceActions> {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var details by remember { mutableStateOf(ResourceUsageDetail()) }
+    var isCleaning by remember { mutableStateOf(false) }
+    var isCalculating by remember { mutableStateOf(true) }
+
+    fun calculateSize() {
+        scope.launch {
+            isCalculating = true
+            withContext(Dispatchers.IO) {
+                details = ResourceManager.calculateResourceDetails(context, presetManager)
+            }
+            isCalculating = false
+        }
+    }
+
+    LaunchedEffect(Unit) { calculateSize() }
+
+    val state = ResourceManager.ResourceState(
+        details = details,
+        isCalculating = isCalculating,
+        isCleaning = isCleaning
+    )
+
+    val actions = ResourceManager.ResourceActions(
+        refreshSize = { calculateSize() },
+        cleanup = { onResettiermaster: () -> Unit, onComplete: () -> Unit ->
+            scope.launch {
+                isCleaning = true
+                try {
+                    ResourceManager.cleanupResources(context, presetManager, onResettiermaster, onComplete)
+                } catch (_: Exception) {}
+                withContext(Dispatchers.IO) {
+                    details = ResourceManager.calculateResourceDetails(context, presetManager)
+                }
+                isCleaning = false
+            }
+        }
+    )
+
+    return state to actions
+}
 
 /**
  * 资源管理对话框
@@ -57,7 +114,7 @@ fun ResourceManageDialog(
     val extendedColors = LocalExtendedColors.current
 
     // 使用资源管理器的状态
-    val (state, actions) = ResourceManager.rememberResourceState(presetManager)
+    val (state, actions) = rememberResourceState(presetManager)
 
     // 显示清理确认对话框
     var showCleanupConfirm by remember { mutableStateOf(false) }

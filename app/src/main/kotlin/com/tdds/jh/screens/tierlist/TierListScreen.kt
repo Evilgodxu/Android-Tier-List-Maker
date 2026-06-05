@@ -73,7 +73,6 @@ import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
-import com.tdds.jh.model.tierlist.TierListConfig
 import com.tdds.jh.screens.tierlist.components.AddTierButton
 import com.tdds.jh.screens.tierlist.components.AuthorInfoSection
 import com.tdds.jh.screens.tierlist.components.DraftRestoreDialog
@@ -134,10 +133,9 @@ fun TierListMakerApp(
     )
 
     // 双击返回退出
-    var backPressedTime by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
     BackHandler {
         val currentTime = System.currentTimeMillis()
-        if (currentTime - backPressedTime > 2000) backPressedTime = currentTime
+        if (currentTime - vm.backPressedTime > 2000) vm.backPressedTime = currentTime
         else onExitApp?.invoke()
     }
 
@@ -216,18 +214,9 @@ fun TierListMakerApp(
                     ) { Text(stringResource(R.string.save), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
                     OutlinedButton(
                         onClick = {
-                            if (vm.dialogState.isResetting) return@OutlinedButton
-                            val currentDefaultTiers = TierListConfig.getDefaultTiers(resources.configuration.locales[0].language == "zh")
-                            val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == currentDefaultTiers.size &&
-                                    vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color } &&
-                                    vm.tierListTitle == context.getString(R.string.default_title) && vm.authorName.isEmpty()
-                            if (isDefault) return@OutlinedButton
+                            if (vm.dialogState.isResetting || vm.isDefaultState()) return@OutlinedButton
                             vm.dialogState.isResetting = true
-                            val imagesToReturn = vm.tierImages.map { it.originalUri ?: it.uri }
-                            vm.tiers.clear(); vm.tiers.addAll(currentDefaultTiers); vm.tierImages.clear()
-                            vm.tierRowPositions = emptyMap(); vm.settingsService.clearCropSettings()
-                            if (imagesToReturn.isNotEmpty()) vm.pendingImages = vm.pendingImages + imagesToReturn
-                            vm.tierListTitle = context.getString(R.string.default_title); vm.authorName = ""
+                            vm.resetTierList()
                             showToastWithoutIcon(context, context.getString(R.string.reset_success))
                             scope.launch { delay(500); vm.dialogState.isResetting = false }
                         },
@@ -260,18 +249,9 @@ fun TierListMakerApp(
                 ) { Text(stringResource(R.string.save), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
                 OutlinedButton(
                     onClick = {
-                        if (vm.dialogState.isResetting) return@OutlinedButton
-                        val currentDefaultTiers = TierListConfig.getDefaultTiers(resources.configuration.locales[0].language == "zh")
-                        val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == currentDefaultTiers.size &&
-                                vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color } &&
-                                vm.tierListTitle == context.getString(R.string.default_title) && vm.authorName.isEmpty()
-                        if (isDefault) return@OutlinedButton
+                        if (vm.dialogState.isResetting || vm.isDefaultState()) return@OutlinedButton
                         vm.dialogState.isResetting = true
-                        val imagesToReturn = vm.tierImages.map { it.originalUri ?: it.uri }
-                        vm.tiers.clear(); vm.tiers.addAll(currentDefaultTiers); vm.tierImages.clear()
-                        vm.tierRowPositions = emptyMap(); vm.settingsService.clearCropSettings()
-                        if (imagesToReturn.isNotEmpty()) vm.pendingImages = vm.pendingImages + imagesToReturn
-                        vm.tierListTitle = context.getString(R.string.default_title); vm.authorName = ""
+                        vm.resetTierList()
                         showToastWithoutIcon(context, context.getString(R.string.reset_success))
                         scope.launch { delay(500); vm.dialogState.isResetting = false }
                     },
@@ -465,7 +445,7 @@ fun TierListMakerApp(
             settingsService = vm.settingsService, presetManager = vm.presetManager,
             tierImages = vm.tierImages, tiers = vm.tiers,
             tierListTitle = vm.tierListTitle, authorName = vm.authorName,
-            pendingImages = vm.pendingImages, defaultTiers = vm.defaultTiers,
+            pendingImages = vm.pendingImages,
             tierRowPositions = vm.tierRowPositions,
             disableClickAdd = vm.disableClickAdd, floatOffsetX = vm.floatOffsetX, floatOffsetY = vm.floatOffsetY,
             externalBadgeEnabled = vm.externalBadgeEnabled, followSystemTheme = followSystemTheme,
@@ -491,13 +471,13 @@ fun TierListMakerApp(
                 onDismiss = {
                     vm.dialogState.showExternalPackagePasswordDialog = false; vm.dialogState.externalPackageUri = null
                     vm.dialogState.externalPackageFileName = ""; vm.dialogState.externalPackagePassword = null
-                    vm.dialogState.externalPackagePasswordError = false; vm.isImportingPreset = false
+                    vm.dialogState.externalPackagePasswordError = false; vm.dialogState.isImportingPreset = false
                 },
-                onConfirm = { password -> vm.packageOperationHandler.continueExternalPackageImportWithPassword(password) { vm.isImportingPreset = it } }
+                onConfirm = { password -> vm.packageOperationHandler.continueExternalPackageImportWithPassword(password) { vm.dialogState.isImportingPreset = it } }
             )
         }
 
-        if (vm.isImportingPreset || vm.isExportingPreset || vm.isSavingPreset || vm.isExportingPackage)
+        if (vm.dialogState.isLoading())
             LoadingDialog(message = stringResource(R.string.loading_resources))
     }
 }

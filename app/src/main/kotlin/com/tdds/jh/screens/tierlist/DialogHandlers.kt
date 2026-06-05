@@ -324,7 +324,6 @@ class DialogHandlers(
     }
 
     fun onResetTierMaster(
-        defaultTiers: List<TierItem>,
         onTitleReset: () -> Unit,
         onAuthorReset: () -> Unit,
         onTiersReset: () -> Unit,

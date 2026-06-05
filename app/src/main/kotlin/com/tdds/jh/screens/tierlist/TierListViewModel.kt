@@ -94,11 +94,6 @@ class TierListViewModel(
     var isDraggingPendingImage by mutableStateOf(false)
     var draggedPendingImageUri by mutableStateOf<Uri?>(null)
 
-    var isImportingPreset by mutableStateOf(false)
-    var isExportingPreset by mutableStateOf(false)
-    var isSavingPreset by mutableStateOf(false)
-    var isExportingPackage by mutableStateOf(false)
-
     var draftConfigData by mutableStateOf<PresetData?>(null)
     var skipDraftRestore by mutableStateOf(false)
     var backPressedTime by mutableLongStateOf(0L)
@@ -143,6 +138,33 @@ class TierListViewModel(
         nameBelowImage = nameBelowImage
     )
 
+    /** 检查当前是否为默认状态（根据当前语言动态判断） */
+    fun isDefaultState(): Boolean {
+        val currentDefaultTiers = TierListConfig.getDefaultTiers(
+            context.resources.configuration.locales[0].language == "zh"
+        )
+        return tierImages.isEmpty() &&
+            tiers.size == currentDefaultTiers.size &&
+            tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color } &&
+            tierListTitle == context.getString(R.string.default_title) &&
+            authorName.isEmpty()
+    }
+
+    /** 重置为默认模板，将已有图片退回待分级区 */
+    fun resetTierList() {
+        val currentDefaultTiers = TierListConfig.getDefaultTiers(
+            context.resources.configuration.locales[0].language == "zh"
+        )
+        val imagesToReturn = tierImages.map { it.originalUri ?: it.uri }
+        tiers.clear()
+        tiers.addAll(currentDefaultTiers)
+        tierImages.clear()
+        tierRowPositions = emptyMap()
+        settingsService.clearCropSettings()
+        if (imagesToReturn.isNotEmpty()) pendingImages = pendingImages + imagesToReturn
+        tierListTitle = context.getString(R.string.default_title)
+        authorName = ""
+    }
 }
 
 
@@ -268,11 +290,16 @@ fun rememberTierListViewModel(
 
     // ==================== 草稿保存注册 ====================
     DisposableEffect(Unit) {
-        onRegisterSaveDraftCallback?.invoke {
-            if (hasContent(context.getString(R.string.default_title))) vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages)
+        val saveDraft: () -> Unit = {
+            if (hasContent(context.getString(R.string.default_title)))
+                scope.launch { vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages) }
             else presetManager.cleanupDraft()
         }
-        onDispose { }
+        onRegisterSaveDraftCallback?.invoke(saveDraft)
+        onDispose {
+            // 注销回调，避免泄漏
+            onRegisterSaveDraftCallback?.invoke { }
+        }
     }
 
     // ==================== Launcher ====================
@@ -354,8 +381,8 @@ private fun handleViewIntent(vm: TierListViewModel, activity: ComponentActivity?
     val isTdds = (fileName?.endsWith(".tdds", ignoreCase = true) == true) || uriString.endsWith(".tdds", ignoreCase = true) || uriString.contains(".tdds", ignoreCase = true)
     val isZip = (fileName?.endsWith(".zip", ignoreCase = true) == true) || uriString.endsWith(".zip", ignoreCase = true) || uriString.contains(".zip", ignoreCase = true)
 
-    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
-    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isTdds) { vm.dialogState.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.dialogState.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.dialogState.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
 }
 
 private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity?, intent: Intent) {
@@ -367,6 +394,6 @@ private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity?
     val isTdds = (fileName?.endsWith(".tdds", ignoreCase = true) == true) || uriString.endsWith(".tdds", ignoreCase = true) || uriString.contains(".tdds", ignoreCase = true)
     val isZip = (fileName?.endsWith(".zip", ignoreCase = true) == true) || uriString.endsWith(".zip", ignoreCase = true) || uriString.contains(".zip", ignoreCase = true)
 
-    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
-    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isTdds) { vm.dialogState.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.dialogState.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.dialogState.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
 }
