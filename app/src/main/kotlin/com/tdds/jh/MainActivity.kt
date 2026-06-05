@@ -210,15 +210,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // 立即更新系统栏可见性
-        updateSystemBarsVisibility()
-        // 延迟多次执行，确保在系统布局和Compose重组完成后状态栏显示/隐藏正确
-        window.decorView.postDelayed({
+        // 延迟到布局完成后更新系统栏
+        window.decorView.post {
             updateSystemBarsVisibility()
-        }, 100)
-        window.decorView.postDelayed({
-            updateSystemBarsVisibility()
-        }, 300)
+        }
         // 旋转后重新应用语言，防止 locale 被系统配置覆盖
         if (::languageManager.isInitialized) {
             val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
@@ -241,32 +236,22 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun setupSystemBars() {
-        // 禁用系统栏适配，确保内容延伸到屏幕边缘
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        windowInsetsController.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         updateSystemBarsVisibility()
     }
 
     private fun updateSystemBarsVisibility() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             // 横屏时强制隐藏状态栏和导航栏
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+            // 先设置行为，再隐藏系统栏
             windowInsetsController.systemBarsBehavior =
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            // 强制设置窗口标志确保全屏
-            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
-            window.decorView.systemUiVisibility = (
-                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                )
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         } else {
             // 竖屏时显示状态栏和导航栏
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
             windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
-            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN)
-            window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_VISIBLE
         }
     }
 

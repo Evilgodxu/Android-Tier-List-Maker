@@ -53,23 +53,16 @@ class ThemeManager(
     }
 }
 
-// 应用状态栏和导航栏主题
+// 应用状态栏和导航栏主题（仅设置图标颜色，不控制显示/隐藏）
 @Composable
 fun ApplyStatusBarTheme(isDarkTheme: Boolean) {
     val view = LocalView.current
     val window = (view.context as? ComponentActivity)?.window
-    val configuration = LocalConfiguration.current
-    DisposableEffect(isDarkTheme, configuration.orientation) {
+    DisposableEffect(isDarkTheme) {
         window?.let {
             WindowCompat.getInsetsController(it, view).apply {
                 isAppearanceLightStatusBars = !isDarkTheme
                 isAppearanceLightNavigationBars = !isDarkTheme
-                // 根据方向显示或隐藏状态栏
-                if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-                } else {
-                    show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
-                }
             }
         }
         onDispose {}
