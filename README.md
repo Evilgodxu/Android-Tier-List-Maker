@@ -127,7 +127,7 @@ KEY_ALIAS=your_key_alias
 KEY_PASSWORD=your_key_password
 ```
 
-同时确保密钥库文件 `jh.keystore` 位于项目根目录。
+同时确保密钥库文件 `your_key.keystore` 位于项目根目录。
 
 **注意**：`local.properties` 和密钥库文件已添加到 `.gitignore`，不会被提交到版本控制。
 
