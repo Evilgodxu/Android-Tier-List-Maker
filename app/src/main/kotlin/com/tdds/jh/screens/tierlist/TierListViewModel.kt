@@ -145,13 +145,7 @@ class TierListViewModel(
 
 }
 
-/**
- * ViewModel Saver 用于 rememberSaveable
- */
-private val TierListViewModelSaver = Saver<TierListViewModel, TierListSavedState>(
-    save = { it.exportSavedState() },
-    restore = { null } // 恢复逻辑在工厂函数中处理
-)
+
 
 /**
  * ViewModel工厂函数
@@ -182,12 +176,35 @@ fun rememberTierListViewModel(
         mutableStateOf<TierListSavedState?>(null)
     }
 
+    // 使用 remember 创建 ViewModel（不带 key，确保只创建一次）
     val vm = remember {
-        TierListViewModel(context, scope, settingsService, presetManager, defaultTiers, savedState)
+        TierListViewModel(context, scope, settingsService, presetManager, defaultTiers, null)
+    }
+
+    // 屏幕旋转后恢复状态
+    LaunchedEffect(Unit) {
+        savedState?.let { state ->
+            // 恢复 tiers
+            vm.tiers.clear()
+            vm.tiers.addAll(state.tiers.map { it.toTierItem() })
+            // 恢复 tierImages
+            vm.tierImages.clear()
+            vm.tierImages.addAll(state.tierImages.map { it.toTierImage() })
+            // 恢复其他状态
+            vm.pendingImages = state.pendingImages.map { it.toUri() }
+            vm.tierListTitle = state.tierListTitle
+            vm.authorName = state.authorName
+            vm.disableClickAdd = state.disableClickAdd
+            vm.floatOffsetX = state.floatOffsetX
+            vm.floatOffsetY = state.floatOffsetY
+            vm.externalBadgeEnabled = state.externalBadgeEnabled
+            vm.nameBelowImage = state.nameBelowImage
+        }
     }
 
     // 当状态变化时保存到 savedState（用于屏幕旋转恢复）
-    LaunchedEffect(vm.tiers.size, vm.tierImages.size, vm.pendingImages.size, vm.tierListTitle, vm.authorName) {
+    LaunchedEffect(vm.tiers.size, vm.tierImages.size, vm.pendingImages.size, vm.tierListTitle, vm.authorName,
+        vm.disableClickAdd, vm.floatOffsetX, vm.floatOffsetY, vm.externalBadgeEnabled, vm.nameBelowImage) {
         savedState = vm.exportSavedState()
     }
 
