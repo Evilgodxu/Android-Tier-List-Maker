@@ -33,9 +33,6 @@ object TierListConfig {
         }
     }
 
-    // 图片选择器最大选择数量
-    const val MAX_IMAGE_SELECTION = 50
-
     // 默认标题（从字符串资源获取）
     // 实际使用时通过 context.getString(R.string.default_title) 获取
 }

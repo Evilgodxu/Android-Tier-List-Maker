@@ -45,14 +45,6 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    override fun onTrimMemory(level: Int) {
-        super.onTrimMemory(level)
-    }
-
-    override fun onLowMemory() {
-        super.onLowMemory()
-    }
-
     override fun attachBaseContext(newBase: android.content.Context) {
         val prefs = newBase.getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE)
         val isFirstLaunch = prefs.getBoolean("is_first_launch", true)

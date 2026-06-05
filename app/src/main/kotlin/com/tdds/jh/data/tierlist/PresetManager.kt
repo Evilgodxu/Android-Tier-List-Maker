@@ -401,21 +401,12 @@ class PresetManager(private val context: Context) {
                 throw ZipPasswordRequiredException("该ZIP文件已加密，请输入密码")
             }
 
-            // 检查是否需要转换格式（需要密码时先设置密码）
-            val needsConversion = if (zipFile.isEncrypted && password != null) {
-                zipFile.setPassword(password.toCharArray())
-                checkPackageNeedsConversionWithPassword(tempFile, password)
-            } else {
-                checkPackageNeedsConversion(tempFile)
-            }
+            // 检查是否需要转换格式
+            val needsConversion = checkPackageNeedsConversion(tempFile, if (zipFile.isEncrypted) password else null)
 
             if (needsConversion) {
                 // 转换为WebP格式并覆盖
-                val convertedFile = if (password != null) {
-                    convertPackageToWebPWithPassword(tempFile, password)
-                } else {
-                    convertPackageToWebP(tempFile)
-                }
+                val convertedFile = convertPackageToWebP(tempFile, password)
                 if (convertedFile != null) {
                     convertedFile.copyTo(destFile, overwrite = true)
                     convertedFile.delete()
@@ -444,41 +435,35 @@ class PresetManager(private val context: Context) {
     }
 
     /**
-     * 检查图包是否需要转换格式（支持密码）
+     * 检查图包是否需要转换格式
+     * @param packageFile 图包文件
+     * @param password 密码（加密ZIP需要）
      */
-    private fun checkPackageNeedsConversionWithPassword(packageFile: File, password: String): Boolean {
+    private fun checkPackageNeedsConversion(packageFile: File, password: String? = null): Boolean {
         return try {
             val zipFile = net.lingala.zip4j.ZipFile(packageFile)
-            zipFile.setPassword(password.toCharArray())
-            val fileHeaders = zipFile.fileHeaders
-            for (fileHeader in fileHeaders) {
-                if (!fileHeader.isDirectory) {
-                    val name = fileHeader.fileName.lowercase()
-                    // 检查是否有非WebP的图片格式
-                    if ((name.endsWith(".jpg") || name.endsWith(".jpeg") ||
-                                name.endsWith(".png") || name.endsWith(".gif")) &&
-                        !name.endsWith(".webp")) {
-                        return true
-                    }
-                }
+            if (password != null) zipFile.setPassword(password.toCharArray())
+            zipFile.fileHeaders.any { fileHeader ->
+                if (fileHeader.isDirectory) return@any false
+                val name = fileHeader.fileName.lowercase()
+                (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png") || name.endsWith(".gif")) && !name.endsWith(".webp")
             }
-            false
-        } catch (e: Exception) {
-            false
-        }
+        } catch (e: Exception) { false }
     }
 
     /**
-     * 将图包转换为WebP格式（支持密码）
+     * 将图包转换为WebP格式
+     * @param sourceFile 源图包文件
+     * @param password 密码（加密ZIP需要）
      */
-    private fun convertPackageToWebPWithPassword(sourceFile: File, password: String): File? {
+    private fun convertPackageToWebP(sourceFile: File, password: String? = null): File? {
         return try {
             val tempDir = context.cacheDir.resolve("convert_webp_${System.currentTimeMillis()}")
             tempDir.mkdirs()
 
             val outputFile = File(tempDir, "converted.zip")
             val sourceZipFile = net.lingala.zip4j.ZipFile(sourceFile)
-            sourceZipFile.setPassword(password.toCharArray())
+            if (password != null) sourceZipFile.setPassword(password.toCharArray())
 
             java.util.zip.ZipOutputStream(FileOutputStream(outputFile)).use { zipOut ->
                 val fileHeaders = sourceZipFile.fileHeaders
@@ -500,35 +485,25 @@ class PresetManager(private val context: Context) {
                             val fileName = entryName.substringAfterLast("/")
                             val tempImageFile = File(tempDir, "temp_$fileName")
                             sourceZipFile.getInputStream(fileHeader).use { input ->
-                                tempImageFile.outputStream().use { output ->
-                                    input.copyTo(output)
-                                }
+                                tempImageFile.outputStream().use { output -> input.copyTo(output) }
                             }
 
                             val baseName = fileName.substringBeforeLast(".")
                             val webpName = "$baseName.webp"
                             val webpFile = File(tempDir, webpName)
-
                             val conversionResult = WebPConverter.convertToWebP(tempImageFile, webpFile)
 
                             val outputEntryName = if (entryName.contains("/")) {
-                                val dirPath = entryName.substringBeforeLast("/")
-                                "$dirPath/$webpName"
-                            } else {
-                                webpName
-                            }
+                                "${entryName.substringBeforeLast("/")}/$webpName"
+                            } else webpName
 
                             if (conversionResult.success) {
                                 zipOut.putNextEntry(java.util.zip.ZipEntry(outputEntryName))
-                                webpFile.inputStream().use { input ->
-                                    input.copyTo(zipOut)
-                                }
+                                webpFile.inputStream().use { input -> input.copyTo(zipOut) }
                                 zipOut.closeEntry()
                             } else {
                                 zipOut.putNextEntry(java.util.zip.ZipEntry(entryName))
-                                tempImageFile.inputStream().use { input ->
-                                    input.copyTo(zipOut)
-                                }
+                                tempImageFile.inputStream().use { input -> input.copyTo(zipOut) }
                                 zipOut.closeEntry()
                             }
 
@@ -536,9 +511,7 @@ class PresetManager(private val context: Context) {
                             webpFile.delete()
                         } else {
                             zipOut.putNextEntry(java.util.zip.ZipEntry(entryName))
-                            sourceZipFile.getInputStream(fileHeader).use { input ->
-                                input.copyTo(zipOut)
-                            }
+                            sourceZipFile.getInputStream(fileHeader).use { input -> input.copyTo(zipOut) }
                             zipOut.closeEntry()
                         }
                     }
@@ -548,117 +521,7 @@ class PresetManager(private val context: Context) {
             val result = outputFile.copyTo(File(context.cacheDir, "final_converted.zip"), overwrite = true)
             tempDir.deleteRecursively()
             result
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /**
-     * 检查图包是否需要转换格式
-     */
-    private fun checkPackageNeedsConversion(packageFile: File): Boolean {
-        try {
-            java.util.zip.ZipInputStream(FileInputStream(packageFile)).use { zipIn ->
-                var entry = zipIn.nextEntry
-                while (entry != null) {
-                    if (!entry.isDirectory) {
-                        val name = entry.name.lowercase()
-                        // 检查是否有非WebP的图片格式
-                        if ((name.endsWith(".jpg") || name.endsWith(".jpeg") ||
-                                    name.endsWith(".png") || name.endsWith(".gif")) &&
-                            !name.endsWith(".webp")) {
-                            return true
-                        }
-                    }
-                    entry = zipIn.nextEntry
-                }
-            }
-        } catch (e: Exception) {
-        }
-        return false
-    }
-
-    /**
-     * 将图包转换为WebP格式
-     */
-    private fun convertPackageToWebP(sourceFile: File): File? {
-        return try {
-            val tempDir = context.cacheDir.resolve("convert_webp_${System.currentTimeMillis()}")
-            tempDir.mkdirs()
-
-            val outputFile = File(tempDir, "converted.zip")
-
-            java.util.zip.ZipOutputStream(FileOutputStream(outputFile)).use { zipOut ->
-                java.util.zip.ZipInputStream(FileInputStream(sourceFile)).use { zipIn ->
-                    var entry = zipIn.nextEntry
-                    while (entry != null) {
-                        val entryName = entry.name
-
-                        if (entry.isDirectory) {
-                            zipOut.putNextEntry(java.util.zip.ZipEntry(entryName))
-                            zipOut.closeEntry()
-                        } else {
-                            val lowerName = entryName.lowercase()
-                            val isImage = lowerName.endsWith(".jpg") ||
-                                    lowerName.endsWith(".jpeg") ||
-                                    lowerName.endsWith(".png") ||
-                                    lowerName.endsWith(".webp") ||
-                                    lowerName.endsWith(".gif")
-
-                            if (isImage) {
-                                val fileName = entryName.substringAfterLast("/")
-                                val tempImageFile = File(tempDir, "temp_$fileName")
-                                tempImageFile.outputStream().use { output ->
-                                    zipIn.copyTo(output)
-                                }
-
-                                val baseName = fileName.substringBeforeLast(".")
-                                val webpName = "$baseName.webp"
-                                val webpFile = File(tempDir, webpName)
-
-                                val conversionResult = WebPConverter.convertToWebP(tempImageFile, webpFile)
-
-                                val outputEntryName = if (entryName.contains("/")) {
-                                    val dirPath = entryName.substringBeforeLast("/")
-                                    "$dirPath/$webpName"
-                                } else {
-                                    webpName
-                                }
-
-                                if (conversionResult.success) {
-                                    zipOut.putNextEntry(java.util.zip.ZipEntry(outputEntryName))
-                                    webpFile.inputStream().use { input ->
-                                        input.copyTo(zipOut)
-                                    }
-                                    zipOut.closeEntry()
-                                } else {
-                                    zipOut.putNextEntry(java.util.zip.ZipEntry(entryName))
-                                    tempImageFile.inputStream().use { input ->
-                                        input.copyTo(zipOut)
-                                    }
-                                    zipOut.closeEntry()
-                                }
-
-                                tempImageFile.delete()
-                                webpFile.delete()
-                            } else {
-                                zipOut.putNextEntry(java.util.zip.ZipEntry(entryName))
-                                zipIn.copyTo(zipOut)
-                                zipOut.closeEntry()
-                            }
-                        }
-                        entry = zipIn.nextEntry
-                    }
-                }
-            }
-
-            // 清理临时目录（保留输出文件）
-            val result = outputFile.copyTo(File(context.cacheDir, "final_converted.zip"), overwrite = true)
-            tempDir.deleteRecursively()
-            result
-        } catch (e: Exception) {
-            null
-        }
+        } catch (e: Exception) { null }
     }
 
     /**

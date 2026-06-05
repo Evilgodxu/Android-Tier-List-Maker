@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.PresetData
 import com.tdds.jh.data.tierlist.PresetManager
-import com.tdds.jh.model.tierlist.PresetOperation
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.TierListConfig
@@ -201,14 +200,17 @@ fun rememberTierListViewModel(
         }
     }
 
+    /** 检查页面是否有用户编辑内容 */
+    fun hasContent(defaultTitle: String): Boolean =
+        vm.tierListTitle != defaultTitle || vm.authorName.isNotEmpty() ||
+        vm.tierImages.isNotEmpty() || vm.pendingImages.isNotEmpty() ||
+        vm.tiers.size != defaultTiers.size || vm.tiers.zip(defaultTiers).any { (c, d) -> c.label != d.label || c.color != d.color }
+
     // ==================== 草稿恢复副作用 ====================
     LaunchedEffect(Unit) {
         if (vm.skipDraftRestore) return@LaunchedEffect
         if (presetManager.hasDraft()) {
-            val hasContent = vm.tierListTitle != context.getString(R.string.default_title) || vm.authorName.isNotEmpty() ||
-                    vm.tierImages.isNotEmpty() || vm.pendingImages.isNotEmpty() ||
-                    vm.tiers.size != defaultTiers.size || vm.tiers.zip(defaultTiers).any { (c, d) -> c.label != d.label || c.color != d.color }
-            if (!hasContent) {
+            if (!hasContent(context.getString(R.string.default_title))) {
                 val draftConfig = presetManager.readDraftConfig()
                 if (draftConfig != null) { vm.draftConfigData = draftConfig; vm.dialogState.showDraftRestoreDialog = true }
             } else presetManager.cleanupDraft()
@@ -218,10 +220,7 @@ fun rememberTierListViewModel(
     // ==================== 草稿保存注册 ====================
     DisposableEffect(Unit) {
         onRegisterSaveDraftCallback?.invoke {
-            val hasContent = vm.tierListTitle != context.getString(R.string.default_title) || vm.authorName.isNotEmpty() ||
-                    vm.tierImages.isNotEmpty() || vm.pendingImages.isNotEmpty() ||
-                    vm.tiers.size != defaultTiers.size || vm.tiers.zip(defaultTiers).any { (c, d) -> c.label != d.label || c.color != d.color }
-            if (hasContent) vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages)
+            if (hasContent(context.getString(R.string.default_title))) vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages)
             else presetManager.cleanupDraft()
         }
         onDispose { }

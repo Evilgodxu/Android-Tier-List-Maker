@@ -207,17 +207,4 @@ class DialogState {
     fun isLoading(): Boolean = isImportingPreset || isExportingPreset ||
             isSavingPreset || isExportingPackage || isImportingPackage
 
-    /**
-     * 获取加载提示文本的资源ID
-     */
-    fun getLoadingMessageResId(): Int {
-        return when {
-            isImportingPreset -> com.tdds.jh.R.string.loading_resources
-            isExportingPreset -> com.tdds.jh.R.string.loading_resources
-            isSavingPreset -> com.tdds.jh.R.string.loading_resources
-            isExportingPackage -> com.tdds.jh.R.string.loading_resources
-            isImportingPackage -> com.tdds.jh.R.string.loading_resources
-            else -> com.tdds.jh.R.string.loading_resources
-        }
-    }
 }
