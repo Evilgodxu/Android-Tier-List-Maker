@@ -1,4 +1,4 @@
-package com.tdds.jh.screens.tierlist.model
+package com.tdds.jh.model.tierlist
 
 /**
  * 预设操作类型

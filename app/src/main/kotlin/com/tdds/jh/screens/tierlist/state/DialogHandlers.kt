@@ -6,14 +6,14 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.tdds.jh.data.manager.PresetManager
-import com.tdds.jh.data.bitmap.TierImage
-import com.tdds.jh.data.bitmap.TierItem
-import com.tdds.jh.data.resource.PackageItem
-import com.tdds.jh.data.resource.PackageManager
-import com.tdds.jh.screens.tierlist.model.PresetOperation
+import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.data.tierlist.PackageItem
+import com.tdds.jh.data.tierlist.PackageManager
+import com.tdds.jh.model.tierlist.PresetOperation
 import com.tdds.jh.screens.tierlist.service.SettingsService
-import com.tdds.jh.screens.tierlist.utils.ImageOperationUtils
+import com.tdds.jh.screens.tierlist.logic.utils.ImageOperationUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -38,7 +38,7 @@ class DialogHandlers(
     private val launchBadgePicker: (Int) -> Unit,
     private val launchBadgePickerForAdding: () -> Unit,
     private val deleteBadge: (Int) -> Unit,
-    private val deleteBadgeFile: (Uri, PresetManager) -> Boolean
+    private val deleteBadgeFile: (Uri, com.tdds.jh.data.tierlist.PresetManager) -> Boolean
 ) {
 
     // ==================== 图片操作对话框处理器 ====================

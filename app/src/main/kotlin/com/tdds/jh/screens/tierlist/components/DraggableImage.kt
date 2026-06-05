@@ -41,7 +41,7 @@ import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
-import com.tdds.jh.data.bitmap.TierImage
+import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.screens.tierlist.logic.utils.TextUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

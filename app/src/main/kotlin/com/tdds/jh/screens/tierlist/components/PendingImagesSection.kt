@@ -30,7 +30,7 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.tdds.jh.R
-import com.tdds.jh.data.bitmap.TierItem
+import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.ui.theme.LocalExtendedColors
 
 /**

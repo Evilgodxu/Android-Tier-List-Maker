@@ -1,7 +1,6 @@
-package com.tdds.jh.screens.tierlist.model
+package com.tdds.jh.model.tierlist
 
 import androidx.compose.ui.graphics.Color
-import com.tdds.jh.data.bitmap.TierItem
 
 /**
  * 梯度表默认配置

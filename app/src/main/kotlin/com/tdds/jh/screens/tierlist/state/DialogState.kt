@@ -7,11 +7,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.tdds.jh.data.bitmap.TierImage
-import com.tdds.jh.data.bitmap.TierItem
-import com.tdds.jh.data.resource.PackageItem
-import com.tdds.jh.data.manager.PresetManager
-import com.tdds.jh.screens.tierlist.model.PresetOperation
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.data.tierlist.PackageItem
+import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.model.tierlist.PresetOperation
 
 /**
  * 对话框状态管理类
@@ -96,7 +96,7 @@ class DialogState {
     var imageToReplace by mutableStateOf<TierImage?>(null)
 
     // ==================== 图包导出状态 ====================
-    var packageToExport by mutableStateOf<com.tdds.jh.data.resource.PackageItem.Imported?>(null)
+    var packageToExport by mutableStateOf<com.tdds.jh.data.tierlist.PackageItem.Imported?>(null)
 
     // ==================== 外部图包导入状态 ====================
     var showExternalPackagePasswordDialog by mutableStateOf(false)

@@ -1,8 +1,8 @@
-package com.tdds.jh.data.manager
+package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.net.Uri
-import com.tdds.jh.util.WebPConverter
+import com.tdds.jh.screens.tierlist.logic.utils.WebPConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

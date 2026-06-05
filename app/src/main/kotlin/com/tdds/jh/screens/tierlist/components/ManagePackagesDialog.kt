@@ -40,12 +40,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.tdds.jh.data.manager.PresetManager
+import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
-import com.tdds.jh.data.manager.ImageResourceManager
-import com.tdds.jh.data.resource.ImportTarget
-import com.tdds.jh.data.resource.PackageItem
-import com.tdds.jh.data.resource.PackageManager as ResourcePackageManager
+import com.tdds.jh.data.tierlist.ImageResourceManager
+import com.tdds.jh.data.tierlist.ImportTarget
+import com.tdds.jh.data.tierlist.PackageItem
+import com.tdds.jh.data.tierlist.PackageManager as ResourcePackageManager
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.launch

@@ -38,8 +38,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.tdds.jh.data.manager.PresetInfo
-import com.tdds.jh.data.manager.PresetManager
+import com.tdds.jh.data.tierlist.PresetInfo
+import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import kotlinx.coroutines.launch

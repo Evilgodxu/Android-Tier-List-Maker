@@ -1,4 +1,4 @@
-package com.tdds.jh.util
+package com.tdds.jh.screens.tierlist.logic.utils
 
 import android.content.Context
 import android.graphics.Bitmap

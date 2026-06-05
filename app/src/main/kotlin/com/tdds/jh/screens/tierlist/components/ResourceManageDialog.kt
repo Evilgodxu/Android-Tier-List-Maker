@@ -34,9 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.tdds.jh.data.manager.PresetManager
+import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
-import com.tdds.jh.data.resource.ResourceManager
+import com.tdds.jh.data.tierlist.ResourceManager
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 

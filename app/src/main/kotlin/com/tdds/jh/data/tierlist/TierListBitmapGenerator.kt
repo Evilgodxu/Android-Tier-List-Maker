@@ -1,4 +1,4 @@
-package com.tdds.jh.data.bitmap
+package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -13,10 +13,11 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.net.Uri
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.res.ResourcesCompat
 import com.tdds.jh.R
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.screens.tierlist.logic.utils.ColorUtils
 import com.tdds.jh.screens.tierlist.logic.utils.TextUtils
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ fun drawWrappedTierLabel(
     canvas: Canvas,
     label: String,
     labelRect: RectF,
-    bgColor: Color,
+    bgColor: androidx.compose.ui.graphics.Color,
     context: Context,
     disableCustomFont: Boolean = false
 ) {
@@ -535,27 +536,3 @@ suspend fun generateTierListBitmap(
         bitmap
     }
 }
-
-data class TierItem(
-    val label: String,
-    val color: Color
-)
-
-data class TierImage(
-    val id: String,
-    val tierLabel: String,
-    val uri: Uri,
-    val name: String = "",
-    val badgeUri: Uri? = null,
-    val badgeUri2: Uri? = null,
-    val badgeUri3: Uri? = null,
-    val cropPositionX: Float = 0.5f,
-    val cropPositionY: Float = 0.5f,
-    val cropScale: Float = 1.0f,
-    val isCropped: Boolean = false,
-    val originalUri: Uri? = null,
-    val cropRatio: Float = 0f,
-    val useCustomCrop: Boolean = false,
-    val customCropWidth: Int = 0,
-    val customCropHeight: Int = 0
-)

@@ -1,4 +1,4 @@
-package com.tdds.jh.data.manager
+package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -11,10 +11,9 @@ import android.graphics.Rect
 import android.net.Uri
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.tdds.jh.data.bitmap.TierImage
-import com.tdds.jh.data.bitmap.TierItem
-import com.tdds.jh.data.resource.ZipPasswordRequiredException
-import com.tdds.jh.util.WebPConverter
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.screens.tierlist.logic.utils.WebPConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -2238,3 +2237,8 @@ class PresetManager(private val context: Context) {
         }
     }
 }
+
+/**
+ * ZIP需要密码的自定义异常
+ */
+class ZipPasswordRequiredException(message: String) : Exception(message)

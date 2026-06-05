@@ -1,11 +1,10 @@
-package com.tdds.jh.data.resource
+package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.net.Uri
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.tdds.jh.data.manager.ImageResourceManager
-import com.tdds.jh.util.WebPConverter
+import com.tdds.jh.screens.tierlist.logic.utils.WebPConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
@@ -33,11 +32,6 @@ enum class ImportTarget {
     PENDING,    // 待分级区域
     BADGES      // 小图标区域
 }
-
-/**
- * ZIP需要密码的自定义异常
- */
-class ZipPasswordRequiredException(message: String) : Exception(message)
 
 /**
  * 图包管理器

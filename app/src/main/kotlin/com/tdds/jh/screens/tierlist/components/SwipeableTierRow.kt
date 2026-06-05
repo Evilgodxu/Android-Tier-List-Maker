@@ -68,8 +68,8 @@ import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import com.tdds.jh.R
-import com.tdds.jh.data.bitmap.TierImage
-import com.tdds.jh.data.bitmap.TierItem
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.screens.tierlist.logic.utils.TextUtils
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import kotlinx.coroutines.delay

@@ -11,8 +11,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
-import com.tdds.jh.data.manager.PresetManager
-import com.tdds.jh.data.resource.ResourceManager
+import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.data.tierlist.ResourceManager
 import com.tdds.jh.ui.theme.MyApplicationTheme
 import com.tdds.jh.ui.theme.ThemeManager
 import com.tdds.jh.screens.tierlist.TierListMakerApp

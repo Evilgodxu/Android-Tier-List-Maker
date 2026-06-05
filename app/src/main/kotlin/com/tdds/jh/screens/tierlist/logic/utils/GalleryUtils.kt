@@ -1,4 +1,4 @@
-package com.tdds.jh.screens.tierlist.utils
+package com.tdds.jh.screens.tierlist.logic.utils
 
 import android.content.ContentValues
 import android.content.Context
@@ -8,9 +8,9 @@ import android.os.Environment
 import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import com.tdds.jh.R
-import com.tdds.jh.data.bitmap.TierImage
-import com.tdds.jh.data.bitmap.TierItem
-import com.tdds.jh.data.bitmap.generateTierListBitmap
+import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

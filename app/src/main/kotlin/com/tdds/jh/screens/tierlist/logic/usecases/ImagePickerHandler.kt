@@ -1,4 +1,4 @@
-package com.tdds.jh.screens.tierlist.handler
+package com.tdds.jh.screens.tierlist.logic.usecases
 
 import android.content.Context
 import android.net.Uri
@@ -9,10 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.platform.LocalContext
-import com.tdds.jh.data.bitmap.TierImage
+import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.screens.tierlist.logic.utils.FileUtils
-import com.tdds.jh.data.manager.ImageResourceManager
-import com.tdds.jh.data.manager.PresetManager
+import com.tdds.jh.data.tierlist.ImageResourceManager
+import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.screens.tierlist.state.DialogState
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
@@ -38,12 +38,6 @@ class ImagePickerHandler(
 
     // ==================== 图片选择器回调处理 ====================
 
-    /**
-     * 处理初始图片选择结果（多选）
-     *
-     * @param uris 选择的图片URI列表
-     * @param currentPendingImages 当前待分级图片列表
-     */
     fun handleImagePickerResult(
         uris: List<Uri>,
         currentPendingImages: List<Uri>
@@ -60,12 +54,6 @@ class ImagePickerHandler(
         }
     }
 
-    /**
-     * 处理添加到待分级区域的图片选择结果（多选）
-     *
-     * @param uris 选择的图片URI列表
-     * @param currentPendingImages 当前待分级图片列表
-     */
     fun handleAddToPendingResult(
         uris: List<Uri>,
         currentPendingImages: List<Uri>
@@ -86,12 +74,6 @@ class ImagePickerHandler(
         }
     }
 
-    /**
-     * 处理图片替换结果（单选）
-     *
-     * @param uri 新选择的图片URI
-     * @param imageToReplace 需要被替换的图片
-     */
     fun handleReplaceImageResult(
         uri: Uri?,
         imageToReplace: TierImage?
@@ -113,11 +95,9 @@ class ImagePickerHandler(
             try {
                 val newUri = copyImageToWorkDir(uri, PresetManager.IMAGES_FOLDER_NAME, "replaced_${System.currentTimeMillis()}.webp")
 
-                // 返回原图到待分级区域
                 val uriToReturn = oldImage.originalUri ?: oldImage.uri
                 onPendingImagesChange(getCurrentPendingImages() + uriToReturn)
 
-                // 替换为新图片
                 tierImages[index] = tierImages[index].copy(
                     uri = newUri,
                     originalUri = newUri,
@@ -131,7 +111,6 @@ class ImagePickerHandler(
                     customCropHeight = 0
                 )
             } catch (e: Exception) {
-                // 回退到原始方式
                 val uriToReturn = oldImage.originalUri ?: oldImage.uri
                 onPendingImagesChange(getCurrentPendingImages() + uriToReturn)
                 tierImages[index] = tierImages[index].copy(
@@ -151,14 +130,6 @@ class ImagePickerHandler(
         }
     }
 
-    /**
-     * 处理小图标选择结果（单选）
-     *
-     * @param uri 选择的图片URI
-     * @param badgeSelectionTarget 小图标选择目标槽位（0表示添加到工作目录，1-3表示设置到对应槽位）
-     * @param imageForBadge 需要设置小图标的图片
-     * @param onBadgeDialogRefresh 刷新小图标对话框回调
-     */
     fun handleBadgeImagePickerResult(
         uri: Uri?,
         badgeSelectionTarget: Int,
@@ -172,7 +143,6 @@ class ImagePickerHandler(
 
         when {
             badgeSelectionTarget == 0 -> {
-                // 添加小图标到工作目录
                 scope.launch {
                     try {
                         copyImageToWorkDir(uri, PresetManager.BADGES_FOLDER_NAME, getBadgeFileName(uri))
@@ -185,7 +155,6 @@ class ImagePickerHandler(
                 }
             }
             imageForBadge != null -> {
-                // 为图片设置小图标
                 scope.launch {
                     try {
                         val workUri = copyImageToWorkDir(uri, PresetManager.BADGES_FOLDER_NAME, getBadgeFileName(uri))
@@ -200,7 +169,6 @@ class ImagePickerHandler(
                         }
                         onBadgeDialogRefresh()
                     } catch (e: Exception) {
-                        // 回退到原始URI
                         val index = tierImages.indexOfFirst { it.id == imageForBadge.id }
                         if (index != -1) {
                             tierImages[index] = when (badgeSelectionTarget) {
@@ -220,12 +188,6 @@ class ImagePickerHandler(
         }
     }
 
-    /**
-     * 处理批量小图标选择结果（多选）
-     *
-     * @param uris 选择的图片URI列表
-     * @param onBadgeDialogRefresh 刷新小图标对话框回调
-     */
     fun handleBadgeImagePickerMultipleResult(
         uris: List<Uri>,
         onBadgeDialogRefresh: () -> Unit
@@ -261,14 +223,6 @@ class ImagePickerHandler(
 
     // ==================== 私有辅助方法 ====================
 
-    /**
-     * 处理图片导入（支持WebP转换和哈希查重）
-     *
-     * @param uris 选择的图片URI列表
-     * @param currentPendingImages 当前待分级图片列表
-     * @param isAppend 是否为追加模式
-     * @return 导入后的图片URI列表
-     */
     private suspend fun processImageImport(
         uris: List<Uri>,
         currentPendingImages: List<Uri>,
@@ -278,14 +232,12 @@ class ImagePickerHandler(
         val imagesDir = File(workImagesDir, "images")
         imagesDir.mkdirs()
 
-        // 构建已有文件的哈希映射表
         val existingHashes = buildExistingHashMap(imagesDir)
         val importedUris = mutableListOf<Uri>()
         var convertedCount = 0
         var reusedCount = 0
 
         uris.forEach { uri ->
-            // 如果是追加模式，检查URI是否已存在
             if (isAppend && uri in currentPendingImages) {
                 reusedCount++
                 return@forEach
@@ -310,9 +262,6 @@ class ImagePickerHandler(
         importedUris
     }
 
-    /**
-     * 构建已有文件的哈希映射表
-     */
     private fun buildExistingHashMap(imagesDir: File): MutableMap<String, File> {
         val existingHashes = mutableMapOf<String, File>()
         imagesDir.listFiles()?.forEach { file ->
@@ -321,16 +270,12 @@ class ImagePickerHandler(
                     val hash = ImageResourceManager.calculateQuickHash(file)
                     existingHashes[hash] = file
                 } catch (e: Exception) {
-                    // 忽略计算失败的文件
                 }
             }
         }
         return existingHashes
     }
 
-    /**
-     * 复制图片到工作目录
-     */
     private suspend fun copyImageToWorkDir(
         uri: Uri,
         folderName: String,
@@ -349,17 +294,11 @@ class ImagePickerHandler(
         Uri.fromFile(destFile)
     }
 
-    /**
-     * 获取小图标文件名
-     */
     private fun getBadgeFileName(uri: Uri): String {
         return FileUtils.getFileNameFromUri(context, uri)
             ?: "${System.currentTimeMillis()}.png"
     }
 
-    /**
-     * 获取当前待分级图片列表（需要从外部状态获取）
-     */
     private var currentPendingImagesProvider: (() -> List<Uri>)? = null
 
     fun setPendingImagesProvider(provider: () -> List<Uri>) {
@@ -370,17 +309,11 @@ class ImagePickerHandler(
         return currentPendingImagesProvider?.invoke() ?: emptyList()
     }
 
-    /**
-     * 重置选择器状态
-     */
     private fun resetPickerState() {
         dialogState.isImagePickerLaunching = false
         onResumeDraftSave?.invoke()
     }
 
-    /**
-     * 重置小图标选择器状态
-     */
     private fun resetBadgeState() {
         dialogState.badgeSelectionTarget = 0
         dialogState.isBadgePickerLaunching = false
@@ -388,9 +321,6 @@ class ImagePickerHandler(
     }
 }
 
-/**
- * 创建并记住 ImagePickerHandler 实例
- */
 @Composable
 fun rememberImagePickerHandler(
     scope: CoroutineScope,

@@ -1,4 +1,4 @@
-package com.tdds.jh.data.resource
+package com.tdds.jh.data.tierlist
 
 import android.content.Context
 import android.net.Uri
@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import com.tdds.jh.data.manager.PresetManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

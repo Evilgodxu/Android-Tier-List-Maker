@@ -31,7 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tdds.jh.R
-import com.tdds.jh.data.bitmap.TierItem
+import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.screens.tierlist.logic.utils.ColorUtils
 import com.tdds.jh.ui.theme.LocalExtendedColors
 
