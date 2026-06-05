@@ -71,6 +71,10 @@ android {
         shaders = false
     }
 
+    androidResources {
+        localeFilters += listOf("zh", "en", "ja", "ko", "ru", "de", "fr", "es", "ar", "pt")
+    }
+
     lint {
         baseline = file("lint-baseline.xml")
     }
@@ -132,6 +136,11 @@ dependencies {
 
     implementation(libs.easycrop)
     implementation(libs.reorderable)
+
+    // DataStore
+    implementation(libs.androidx.datastore)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

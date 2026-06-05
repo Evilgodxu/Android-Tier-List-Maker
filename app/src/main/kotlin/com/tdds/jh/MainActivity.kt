@@ -1,41 +1,43 @@
 package com.tdds.jh
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.tdds.jh.data.tierlist.PresetManager
-import com.tdds.jh.data.tierlist.ResourceManager
-import com.tdds.jh.ui.theme.MyApplicationTheme
-import com.tdds.jh.ui.theme.ThemeManager
-import com.tdds.jh.screens.tierlist.TierListMakerApp
-import com.tdds.jh.R
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.tdds.jh.core.utils.localization.LanguageManager
+import com.tdds.jh.core.utils.localization.ProvideLocalizedContext
+import com.tdds.jh.data.repository.UserPreferencesRepository
+import com.tdds.jh.data.tierlist.ResourceManager
+import com.tdds.jh.screens.tierlist.TierListMakerApp
+import com.tdds.jh.ui.theme.ApplyStatusBarTheme
+import com.tdds.jh.ui.theme.MyApplicationTheme
+import com.tdds.jh.ui.theme.ThemeManager
+import com.tdds.jh.ui.theme.ThemeMode
 
 class MainActivity : ComponentActivity() {
 
-    // 草稿保存回调，用于在双击退出时触发保存
     private var saveDraftCallback: (() -> Unit)? = null
-
-    // 标记是否正在执行不需要保存草稿的操作（如打开图片选择器、文件选择器等）
-    // 当此标记为 true 时，onUserLeaveHint 不会触发草稿保存
     private var isSkippingDraftSave = false
 
-    // 临时禁用草稿保存，用于执行特定操作时
+    private val userPreferencesRepository: UserPreferencesRepository by lazy {
+        UserPreferencesRepository(applicationContext)
+    }
+    private lateinit var languageManager: LanguageManager
+    private lateinit var themeManager: ThemeManager
+
     private fun skipDraftSaveTemporarily() {
         isSkippingDraftSave = true
     }
 
-    // 恢复草稿保存
     private fun resumeDraftSave() {
         isSkippingDraftSave = false
     }
@@ -45,13 +47,122 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    override fun attachBaseContext(newBase: android.content.Context) {
-        val prefs = newBase.getSharedPreferences("app_settings", android.content.Context.MODE_PRIVATE)
-        val isFirstLaunch = prefs.getBoolean("is_first_launch", true)
-        val language = if (isFirstLaunch) {
-            val systemLocale = newBase.resources.configuration.locales[0]
-            val systemLanguage = systemLocale.language
-            val autoLanguage = when (systemLanguage) {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val packageInfo = packageManager.getPackageInfo(packageName, 0)
+        val versionName = packageInfo.versionName ?: ""
+        @Suppress("UNUSED_VARIABLE")
+        val versionCode = packageInfo.longVersionCode.toInt()
+
+        ResourceManager.cleanupLogFiles(this)
+
+        languageManager = LanguageManager(this, userPreferencesRepository)
+        themeManager = ThemeManager(userPreferencesRepository)
+
+        enableEdgeToEdge()
+        val scope = lifecycleScope
+        val appRes = resources
+        setContent {
+            // 首次启动语言检测
+            LaunchedEffect(Unit) {
+                val firstLaunch = userPreferencesRepository.isFirstLaunch.first()
+                if (firstLaunch) {
+                    val systemLocale = appRes.configuration.locales[0]
+                    val autoLanguage = matchSystemLanguage(systemLocale.language)
+                    userPreferencesRepository.setLanguage(autoLanguage)
+                    userPreferencesRepository.setFirstLaunch(false)
+                    userPreferencesRepository.setShowLanguageOnFirstLaunch(true)
+                }
+            }
+
+            val themeMode by userPreferencesRepository.themeMode.collectAsStateWithLifecycle(initialValue = ThemeMode.SYSTEM)
+            val disableCustomFont by userPreferencesRepository.disableCustomFont.collectAsStateWithLifecycle(initialValue = true)
+            val currentLanguage by userPreferencesRepository.language.collectAsStateWithLifecycle(initialValue = "system")
+
+            val systemDark = isSystemInDarkTheme()
+            val isDarkTheme = themeManager.resolveDarkThemeStatic(themeMode, systemDark)
+            val followSystemTheme = themeMode == ThemeMode.SYSTEM
+
+            ApplyStatusBarTheme(isDarkTheme)
+
+            ProvideLocalizedContext(languageManager) {
+                MyApplicationTheme(
+                    darkTheme = isDarkTheme,
+                    disableCustomFont = disableCustomFont
+                ) {
+                    TierListMakerApp(
+                        isDarkTheme = isDarkTheme,
+                        followSystemTheme = followSystemTheme,
+                        disableCustomFont = disableCustomFont,
+                        currentLanguage = currentLanguage,
+                        onDisableCustomFontChange = { newValue ->
+                            scope.launch {
+                                userPreferencesRepository.setDisableCustomFont(newValue)
+                            }
+                        },
+                        onThemeChange = { newDarkTheme ->
+                            scope.launch {
+                                val newMode = if (newDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
+                                themeManager.setThemeMode(newMode)
+                            }
+                        },
+                        onFollowSystemThemeChange = { followSystem ->
+                            scope.launch {
+                                val newMode = if (followSystem) ThemeMode.SYSTEM
+                                else if (isDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
+                                themeManager.setThemeMode(newMode)
+                            }
+                        },
+                        onLanguageChange = { languageCode ->
+                            scope.launch {
+                                userPreferencesRepository.setLanguage(languageCode)
+                            }
+                        },
+                        onRegisterSaveDraftCallback = { callback ->
+                            saveDraftCallback = callback
+                        },
+                        onSaveDraftForResourceManager = {
+                            saveDraftCallback?.invoke()
+                        },
+                        onSkipDraftSave = {
+                            skipDraftSaveTemporarily()
+                        },
+                        onResumeDraftSave = {
+                            resumeDraftSave()
+                        },
+                        onExitApp = {
+                            exitAppWithCleanup()
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    fun exitAppWithCleanup() {
+        finishAffinity()
+        try {
+            saveDraftCallback?.invoke()
+        } catch (_: Exception) {
+        }
+    }
+
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (isSkippingDraftSave) return
+        lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    saveDraftCallback?.invoke()
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    companion object {
+        fun matchSystemLanguage(systemLanguage: String): String {
+            return when (systemLanguage) {
                 "zh" -> "zh"
                 "en" -> "en"
                 "ja" -> "ja"
@@ -63,111 +174,6 @@ class MainActivity : ComponentActivity() {
                 "ar" -> "ar"
                 "pt" -> "pt"
                 else -> "zh"
-            }
-            prefs.edit()
-                .putString("language", autoLanguage)
-                .putBoolean("is_first_launch", false)
-                .putBoolean("show_language_on_first_launch", true)
-                .apply()
-            autoLanguage
-        } else {
-            prefs.getString("language", "zh") ?: "zh"
-        }
-        val locale = java.util.Locale.forLanguageTag(language)
-        val config = android.content.res.Configuration(newBase.resources.configuration)
-        config.setLocale(locale)
-        val context = newBase.createConfigurationContext(config)
-        super.attachBaseContext(context)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val packageInfo = packageManager.getPackageInfo(packageName, 0)
-        val versionName = packageInfo.versionName ?: ""
-        val versionCode = packageInfo.longVersionCode.toInt()
-
-        // 启动时仅清理7天前的日志文件，保留其他缓存以提高启动速度
-        ResourceManager.cleanupLogFiles(this)
-
-        enableEdgeToEdge()
-        setContent {
-            val themeState = ThemeManager.rememberThemeState(this)
-            val isDarkTheme = themeState.value.isDarkTheme
-            val systemInDarkTheme = ThemeManager.getSystemInDarkTheme()
-
-            val prefs = getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-            var disableCustomFont by remember { mutableStateOf(prefs.getBoolean("disable_custom_font", true)) }
-
-            ThemeManager.ApplyStatusBarTheme(isDarkTheme)
-
-            MyApplicationTheme(
-                darkTheme = isDarkTheme,
-                disableCustomFont = disableCustomFont
-            ) {
-                TierListMakerApp(
-                    isDarkTheme = isDarkTheme,
-                    followSystemTheme = themeState.value.followSystemTheme,
-                    disableCustomFont = disableCustomFont,
-                    onDisableCustomFontChange = { newValue ->
-                        disableCustomFont = newValue
-                        prefs.edit().putBoolean("disable_custom_font", newValue).apply()
-                    },
-                    onThemeChange = { newTheme ->
-                        val newState = ThemeManager.toggleTheme(this, themeState.value)
-                        themeState.value = newState
-                    },
-                    onFollowSystemThemeChange = { newValue ->
-                        val newState = ThemeManager.setFollowSystemTheme(this, newValue, systemInDarkTheme)
-                        themeState.value = newState
-                    },
-                    onRegisterSaveDraftCallback = { callback ->
-                        saveDraftCallback = callback
-                    },
-                    onSaveDraftForResourceManager = {
-                        saveDraftCallback?.invoke()
-                    },
-                    onSkipDraftSave = {
-                        skipDraftSaveTemporarily()
-                    },
-                    onResumeDraftSave = {
-                        resumeDraftSave()
-                    },
-                    onExitApp = {
-                        exitAppWithCleanup()
-                    }
-                )
-            }
-        }
-    }
-
-    /**
-     * 双击退出时立即返回桌面，同步保存草稿，后台清理资源
-     */
-    fun exitAppWithCleanup() {
-        finishAffinity()
-
-        try {
-            saveDraftCallback?.invoke()
-        } catch (_: Exception) {
-        }
-    }
-
-    /**
-     * 当用户离开Activity时调用（如按Home键、切换到其他应用）
-     */
-    override fun onUserLeaveHint() {
-        super.onUserLeaveHint()
-
-        if (isSkippingDraftSave) {
-            return
-        }
-
-        lifecycleScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    saveDraftCallback?.invoke()
-                }
-            } catch (_: Exception) {
             }
         }
     }

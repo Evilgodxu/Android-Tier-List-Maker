@@ -77,9 +77,6 @@ class TierListViewModel(
     var tierListTitle by mutableStateOf(context.getString(R.string.default_title))
     var authorName by mutableStateOf("")
 
-    var currentLanguage by mutableStateOf(settingsService.currentLanguage)
-    var languageChanged by mutableStateOf(false)
-
     var selectedImageForDrag by mutableStateOf<TierImage?>(null)
     var draggingTierImage by mutableStateOf<TierImage?>(null)
     var draggingTierImagePosition by mutableStateOf(Offset.Zero)
@@ -155,15 +152,6 @@ fun rememberTierListViewModel(
 
     val vm = remember {
         TierListViewModel(context, scope, settingsService, presetManager, defaultTiers)
-    }
-
-    // ==================== 语言切换副作用 ====================
-    LaunchedEffect(vm.languageChanged) {
-        if (vm.languageChanged) {
-            vm.languageChanged = false
-            vm.settingsService.saveLanguage(vm.currentLanguage)
-            (context as ComponentActivity).recreate()
-        }
     }
 
     // ==================== Handler ====================
@@ -311,7 +299,8 @@ private fun handleViewIntent(vm: TierListViewModel, activity: ComponentActivity,
 
 private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity, intent: Intent) {
     val dataUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-    else @Suppress("DEPRECATION") intent.getParcelableExtra(Intent.EXTRA_STREAM) ?: return
+    else @Suppress("DEPRECATION")
+        intent.getParcelableExtra(Intent.EXTRA_STREAM) ?: return
     if (dataUri == null) return
     val fileName = FileUtils.getFileNameFromUri(vm.context, dataUri); val uriString = dataUri.toString()
     val isTdds = (fileName?.endsWith(".tdds", ignoreCase = true) == true) || uriString.endsWith(".tdds", ignoreCase = true) || uriString.contains(".tdds", ignoreCase = true)

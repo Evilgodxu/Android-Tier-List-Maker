@@ -392,6 +392,7 @@ class DialogHandlers(
         if (language != currentLanguage) {
             onLanguageChange(language)
         }
+        // 无需 recreate — ProvideLocalizedContext 自动处理
     }
 
     // ==================== 使用说明对话框处理器 ====================

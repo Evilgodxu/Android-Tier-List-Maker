@@ -13,32 +13,25 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-/**
- * 扩展颜色数据类
- * 包含应用特有的额外颜色定义,包括层级颜色和UI组件颜色
- */
+// 扩展颜色数据类
 data class ExtendedColors(
     val background: Color,
     val surface: Color,
     val surfaceVariant: Color,
     val cardBackground: Color,
     val accentColor: Color,
-    val tierSColor: Color = Color(0xFFFF6B6B),
-    val tierAColor: Color = Color(0xFFFFB347),
-    val tierBColor: Color = Color(0xFFFFFACD),
-    val tierCColor: Color = Color(0xFFB8E6B8),
-    val tierDColor: Color = Color(0xFF87CEEB),
-    val tierEColor: Color = Color(0xFFDDA0DD),
+    val tierSColor: Color = tier_s_color,
+    val tierAColor: Color = tier_a_color,
+    val tierBColor: Color = tier_b_color,
+    val tierCColor: Color = tier_c_color,
+    val tierDColor: Color = tier_d_color,
+    val tierEColor: Color = tier_e_color,
     val buttonContainer: Color,
     val buttonContent: Color,
     val navigationBar: Color,
     val statusBar: Color
 )
 
-/**
- * 本地提供的扩展颜色CompositionLocal
- * 用于在Compose组件树中提供扩展颜色
- */
 val LocalExtendedColors = staticCompositionLocalOf {
     ExtendedColors(
         background = Color.Unspecified,
@@ -53,102 +46,107 @@ val LocalExtendedColors = staticCompositionLocalOf {
     )
 }
 
-/**
- * 获取扩展颜色 - 只支持深色和浅色模式
- */
 @Composable
 fun getExtendedColors(isDarkTheme: Boolean): ExtendedColors {
     return if (isDarkTheme) {
         ExtendedColors(
-            background = Color(0xFF1C1B1F),
-            surface = Color(0xFF2C2C2C),
-            surfaceVariant = Color(0xFF2C2C2C),
-            cardBackground = Color(0xFF2C2C2C),
-            accentColor = Color(0xFFAAAAAA),
-            buttonContainer = Color(0xFFAAAAAA),
-            buttonContent = Color(0xFF1C1B1F),
-            navigationBar = Color(0xFF1C1B1F),
-            statusBar = Color(0xFF1C1B1F)
+            background = extended_dark_background,
+            surface = extended_dark_surface,
+            surfaceVariant = extended_dark_cardBackground,
+            cardBackground = extended_dark_cardBackground,
+            accentColor = extended_dark_accentColor,
+            buttonContainer = extended_dark_accentColor,
+            buttonContent = extended_dark_background,
+            navigationBar = extended_dark_background,
+            statusBar = extended_dark_background
         )
     } else {
         ExtendedColors(
-            background = Color(0xFFFAF8F5),
-            surface = Color(0xFFFAF8F5),
-            surfaceVariant = Color(0xFFDFDFDF),
-            cardBackground = Color(0xFFDFDFDF),
-            accentColor = Color(0xFF888888),
-            buttonContainer = Color(0xFF888888),
-            buttonContent = Color(0xFFFAF8F5),
-            navigationBar = Color(0xFFFAF8F5),
-            statusBar = Color(0xFFFAF8F5)
+            background = extended_light_background,
+            surface = extended_light_surface,
+            surfaceVariant = extended_light_surfaceVariant,
+            cardBackground = extended_light_cardBackground,
+            accentColor = extended_light_accentColor,
+            buttonContainer = extended_light_accentColor,
+            buttonContent = extended_light_background,
+            navigationBar = extended_light_background,
+            statusBar = extended_light_background
         )
     }
 }
 
-// ==================== 深色主题配色 ====================
-// 使用棕色系配色，与浅色模式保持一致的视觉风格
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFD0BCFF),  // 柔和的紫色作为主色
-    onPrimary = Color(0xFF381E72),
-    primaryContainer = Color(0xFF4F378B),
-    onPrimaryContainer = Color(0xFFEADDFF),
-    secondary = Color(0xFFCCC2DC),
-    onSecondary = Color(0xFF332D41),
-    secondaryContainer = Color(0xFF4A4458),
-    onSecondaryContainer = Color(0xFFE8DEF8),
-    tertiary = Color(0xFFEFB8C8),
-    onTertiary = Color(0xFF492532),
-    tertiaryContainer = Color(0xFF633B48),
-    onTertiaryContainer = Color(0xFFFFD8E4),
-    error = Color(0xFFCF6679),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFF8C1D18),
-    onErrorContainer = Color(0xFFF9DEDC),
-    background = Color(0xFF1C1B1F),
-    onBackground = Color(0xFFE6E1E5),
-    surface = Color(0xFF1C1B1F),
-    onSurface = Color(0xFFE6E1E5),
-    surfaceVariant = Color(0xFF49454F),
-    onSurfaceVariant = Color(0xFFCAC4D0),
-    outline = Color(0xFF938F99),
-    outlineVariant = Color(0xFF49454F),
-    inverseSurface = Color(0xFFE6E1E5),
-    inverseOnSurface = Color(0xFF1C1B1F),
-    inversePrimary = Color(0xFF6750A4),
-    surfaceTint = Color(0xFFD0BCFF)
+    primary = md_theme_dark_primary,
+    onPrimary = md_theme_dark_onPrimary,
+    primaryContainer = md_theme_dark_primaryContainer,
+    onPrimaryContainer = md_theme_dark_onPrimaryContainer,
+    secondary = md_theme_dark_secondary,
+    onSecondary = md_theme_dark_onSecondary,
+    secondaryContainer = md_theme_dark_secondaryContainer,
+    onSecondaryContainer = md_theme_dark_onSecondaryContainer,
+    tertiary = md_theme_dark_tertiary,
+    onTertiary = md_theme_dark_onTertiary,
+    tertiaryContainer = md_theme_dark_tertiaryContainer,
+    onTertiaryContainer = md_theme_dark_onTertiaryContainer,
+    error = md_theme_dark_error,
+    onError = md_theme_dark_onError,
+    errorContainer = md_theme_dark_errorContainer,
+    onErrorContainer = md_theme_dark_onErrorContainer,
+    outline = md_theme_dark_outline,
+    background = md_theme_dark_background,
+    onBackground = md_theme_dark_onBackground,
+    surface = md_theme_dark_surface,
+    onSurface = md_theme_dark_onSurface,
+    surfaceVariant = md_theme_dark_surfaceVariant,
+    onSurfaceVariant = md_theme_dark_onSurfaceVariant,
+    surfaceContainerLowest = md_theme_dark_surfaceContainerLowest,
+    surfaceContainerLow = md_theme_dark_surfaceContainerLow,
+    surfaceContainer = md_theme_dark_surfaceContainer,
+    surfaceContainerHigh = md_theme_dark_surfaceContainerHigh,
+    surfaceContainerHighest = md_theme_dark_surfaceContainerHighest,
+    inverseSurface = md_theme_dark_inverseSurface,
+    inverseOnSurface = md_theme_dark_inverseOnSurface,
+    inversePrimary = md_theme_dark_inversePrimary,
+    surfaceTint = md_theme_dark_surfaceTint,
+    outlineVariant = md_theme_dark_outlineVariant,
+    scrim = md_theme_dark_scrim,
 )
 
-// ==================== 浅色主题配色 ====================
-// 米黄色配色，模拟纸张颜色更护眼，适合长时间编辑
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF6B5B4F),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFF0E8E0),
-    onPrimaryContainer = Color(0xFF2A1F18),
-    secondary = Color(0xFF7A6B5F),
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFF0EAE4),
-    onSecondaryContainer = Color(0xFF2A2420),
-    tertiary = Color(0xFF6B7A5F),
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFE8F0E0),
-    onTertiaryContainer = Color(0xFF1F2A18),
-    error = Color(0xFFB3261E),
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFF9DEDC),
-    onErrorContainer = Color(0xFF410E0B),
-    background = Color(0xFFFAF8F5),
-    onBackground = Color(0xFF3D3630),
-    surface = Color(0xFFFAF8F5),
-    onSurface = Color(0xFF3D3630),
-    surfaceVariant = Color(0xFFF0EDE8),
-    onSurfaceVariant = Color(0xFF6B655C),
-    outline = Color(0xFF9E958C),
-    outlineVariant = Color(0xFFD9D4CC),
-    inverseSurface = Color(0xFF3D3630),
-    inverseOnSurface = Color(0xFFFAF8F5),
-    inversePrimary = Color(0xFFE8DCD4),
-    surfaceTint = Color(0xFF6B5B4F)
+    primary = md_theme_light_primary,
+    onPrimary = md_theme_light_onPrimary,
+    primaryContainer = md_theme_light_primaryContainer,
+    onPrimaryContainer = md_theme_light_onPrimaryContainer,
+    secondary = md_theme_light_secondary,
+    onSecondary = md_theme_light_onSecondary,
+    secondaryContainer = md_theme_light_secondaryContainer,
+    onSecondaryContainer = md_theme_light_onSecondaryContainer,
+    tertiary = md_theme_light_tertiary,
+    onTertiary = md_theme_light_onTertiary,
+    tertiaryContainer = md_theme_light_tertiaryContainer,
+    onTertiaryContainer = md_theme_light_onTertiaryContainer,
+    error = md_theme_light_error,
+    onError = md_theme_light_onError,
+    errorContainer = md_theme_light_errorContainer,
+    onErrorContainer = md_theme_light_onErrorContainer,
+    outline = md_theme_light_outline,
+    background = md_theme_light_background,
+    onBackground = md_theme_light_onBackground,
+    surface = md_theme_light_surface,
+    onSurface = md_theme_light_onSurface,
+    surfaceVariant = md_theme_light_surfaceVariant,
+    onSurfaceVariant = md_theme_light_onSurfaceVariant,
+    surfaceContainerLowest = md_theme_light_surfaceContainerLowest,
+    surfaceContainerLow = md_theme_light_surfaceContainerLow,
+    surfaceContainer = md_theme_light_surfaceContainer,
+    surfaceContainerHigh = md_theme_light_surfaceContainerHigh,
+    surfaceContainerHighest = md_theme_light_surfaceContainerHighest,
+    inverseSurface = md_theme_light_inverseSurface,
+    inverseOnSurface = md_theme_light_inverseOnSurface,
+    inversePrimary = md_theme_light_inversePrimary,
+    surfaceTint = md_theme_light_surfaceTint,
+    outlineVariant = md_theme_light_outlineVariant,
+    scrim = md_theme_light_scrim,
 )
 
 @Composable
@@ -168,8 +166,6 @@ fun MyApplicationTheme(
     }
 
     val extendedColors = getExtendedColors(darkTheme)
-
-    // 根据用户设置选择字体配置，禁用自定义字体可减少内存占用
     val typography = if (disableCustomFont) SystemTypography else Typography
 
     CompositionLocalProvider(LocalExtendedColors provides extendedColors) {

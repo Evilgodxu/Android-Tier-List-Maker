@@ -22,6 +22,7 @@ commonsCompress = "1.28.0"
 documentfile = "1.1.0"
 easycrop = "0.1.1"
 reorderable = "3.1.0"
+datastore = "1.2.1"
 
 [libraries]
 
@@ -48,3 +49,10 @@ commons-compress = { group = "org.apache.commons", name = "commons-compress", ve
 zip4j = { group = "net.lingala.zip4j", name = "zip4j", version.ref = "zip4j" }
 easycrop = { group = "io.github.mr0xf00", name = "easycrop", version.ref = "easycrop" }
 reorderable = { group = "sh.calvin.reorderable", name = "reorderable", version.ref = "reorderable" }
+
+# 键值存储 DataStore
+androidx-datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# Lifecycle Runtime Compose (collectAsStateWithLifecycle)
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
