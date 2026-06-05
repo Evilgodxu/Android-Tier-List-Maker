@@ -1,6 +1,7 @@
 package com.tdds.jh.screens.tierlist.components
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -13,13 +14,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
@@ -41,14 +48,18 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.edit
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.R
+import com.tdds.jh.ui.CustomVerticalScrollbar
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import java.io.File
 import java.io.FileOutputStream
@@ -146,133 +157,145 @@ fun ImageCropDialog(
         }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = extendedColors.cardBackground,
-        title = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(stringResource(R.string.select_crop_area))
-            }
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // 预览区域
-                CropPreviewArea(
-                    bitmap = bitmap,
-                    selectedRatio = selectedRatio,
-                    useCustomSize = useCustomSize,
-                    customSizeWidth = customSizeWidth,
-                    customSizeHeight = customSizeHeight,
-                    cropPositionX = cropPositionX,
-                    cropPositionY = cropPositionY,
-                    onPositionChange = { x, y ->
-                        cropPositionX = x
-                        cropPositionY = y
-                    }
-                )
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val scrollState = rememberScrollState()
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 显示图片分辨率
-                bitmap?.let {
-                    Text(
-                        text = "${it.width} x ${it.height}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // 比例选择
-                Text(text = stringResource(R.string.crop_ratio))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(0.95f)
+                .then(if (isLandscape) Modifier.heightIn(max = 560.dp) else Modifier),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground)
+        ) {
+            Column {
+                // 标题
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp, bottom = 4.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    CropRatioChip(
-                        selected = selectedRatio == 1f && !useCustomSize,
-                        label = stringResource(R.string.ratio_1_1),
-                        onClick = {
-                            selectedRatio = 1f
-                            useCustomSize = false
-                            resetCustomSize(customCropWidth, customCropHeight)
-                        }
+                    Text(
+                        text = stringResource(R.string.select_crop_area),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    CropRatioChip(
-                        selected = selectedRatio == 0.75f && !useCustomSize,
-                        label = stringResource(R.string.ratio_3_4),
-                        onClick = {
-                            selectedRatio = 0.75f
-                            useCustomSize = false
-                            resetCustomSize(customCropWidth, customCropHeight)
+                }
+
+                // 内容区域
+                if (isLandscape) {
+                    Row(
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = 16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CropDialogContent(
+                                bitmap = bitmap,
+                                selectedRatio = selectedRatio,
+                                useCustomSize = useCustomSize,
+                                customSizeWidth = customSizeWidth,
+                                customSizeHeight = customSizeHeight,
+                                cropPositionX = cropPositionX,
+                                cropPositionY = cropPositionY,
+                                onPositionChange = { x, y -> cropPositionX = x; cropPositionY = y },
+                                onRatioSelect = { r -> selectedRatio = r; useCustomSize = false },
+                                onCustomSizeClick = {
+                                    showCustomSizeDialog = true
+                                    if (customSizeWidth > 0 && customSizeHeight > 0) {
+                                        customCropWidth = customSizeWidth.toString()
+                                        customCropHeight = customSizeHeight.toString()
+                                    }
+                                    useCustomSize = true
+                                }
+                            )
                         }
-                    )
-                    CropRatioChip(
-                        selected = useCustomSize,
-                        label = stringResource(R.string.custom),
-                        onClick = {
-                            showCustomSizeDialog = true
-                            if (customSizeWidth > 0 && customSizeHeight > 0) {
-                                customCropWidth = customSizeWidth.toString()
-                                customCropHeight = customSizeHeight.toString()
+                        CustomVerticalScrollbar(
+                            scrollState = scrollState,
+                            modifier = Modifier.fillMaxHeight()
+                        )
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CropDialogContent(
+                            bitmap = bitmap,
+                            selectedRatio = selectedRatio,
+                            useCustomSize = useCustomSize,
+                            customSizeWidth = customSizeWidth,
+                            customSizeHeight = customSizeHeight,
+                            cropPositionX = cropPositionX,
+                            cropPositionY = cropPositionY,
+                            onPositionChange = { x, y -> cropPositionX = x; cropPositionY = y },
+                            onRatioSelect = { r -> selectedRatio = r; useCustomSize = false },
+                            onCustomSizeClick = {
+                                showCustomSizeDialog = true
+                                if (customSizeWidth > 0 && customSizeHeight > 0) {
+                                    customCropWidth = customSizeWidth.toString()
+                                    customCropHeight = customSizeHeight.toString()
+                                }
+                                useCustomSize = true
                             }
-                            useCustomSize = true
+                        )
+                    }
+                }
+
+                // 按钮区域
+                val currentCropState = CropState(
+                    positionX = cropPositionX,
+                    positionY = cropPositionY,
+                    scale = cropScale,
+                    cropRatio = if (useCustomSize && customSizeWidth > 0 && customSizeHeight > 0) {
+                        customSizeWidth.toFloat() / customSizeHeight.toFloat()
+                    } else {
+                        selectedRatio
+                    },
+                    useCustomCrop = useCustomSize,
+                    customCropWidth = if (useCustomSize) customSizeWidth else 0,
+                    customCropHeight = if (useCustomSize) customSizeHeight else 0
+                )
+                val currentImageWidth = bitmap?.width ?: 0
+                val currentImageHeight = bitmap?.height ?: 0
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    CropDialogButtons(
+                        bitmap = bitmap,
+                        currentCropState = currentCropState,
+                        currentImageWidth = currentImageWidth,
+                        currentImageHeight = currentImageHeight,
+                        onApplyToAll = onApplyToAll,
+                        onReset = { onCrop(imageUri, CropState(cropRatio = 0f)) },
+                        onConfirm = {
+                            performCrop(
+                                bitmap = bitmap,
+                                imageUri = imageUri,
+                                useCustomSize = useCustomSize,
+                                customSizeWidth = customSizeWidth,
+                                customSizeHeight = customSizeHeight,
+                                selectedRatio = selectedRatio,
+                                cropPositionX = cropPositionX,
+                                cropPositionY = cropPositionY,
+                                cropScale = cropScale,
+                                context = context,
+                                presetManager = presetManager,
+                                prefs = prefs,
+                                onCrop = onCrop,
+                                onDismiss = onDismiss
+                            )
                         }
                     )
                 }
             }
-        },
-        confirmButton = {
-            val currentCropState = CropState(
-                positionX = cropPositionX,
-                positionY = cropPositionY,
-                scale = cropScale,
-                cropRatio = if (useCustomSize && customSizeWidth > 0 && customSizeHeight > 0) {
-                    customSizeWidth.toFloat() / customSizeHeight.toFloat()
-                } else {
-                    selectedRatio
-                },
-                useCustomCrop = useCustomSize,
-                customCropWidth = if (useCustomSize) customSizeWidth else 0,
-                customCropHeight = if (useCustomSize) customSizeHeight else 0
-            )
-            val currentImageWidth = bitmap?.width ?: 0
-            val currentImageHeight = bitmap?.height ?: 0
-            CropDialogButtons(
-                bitmap = bitmap,
-                currentCropState = currentCropState,
-                currentImageWidth = currentImageWidth,
-                currentImageHeight = currentImageHeight,
-                onApplyToAll = onApplyToAll,
-                onReset = { onCrop(imageUri, CropState(cropRatio = 0f)) },
-                onConfirm = {
-                    performCrop(
-                        bitmap = bitmap,
-                        imageUri = imageUri,
-                        useCustomSize = useCustomSize,
-                        customSizeWidth = customSizeWidth,
-                        customSizeHeight = customSizeHeight,
-                        selectedRatio = selectedRatio,
-                        cropPositionX = cropPositionX,
-                        cropPositionY = cropPositionY,
-                        cropScale = cropScale,
-                        context = context,
-                        presetManager = presetManager,
-                        prefs = prefs,
-                        onCrop = onCrop,
-                        onDismiss = onDismiss
-                    )
-                }
-            )
-        },
-        dismissButton = {}
-    )
+        }
+    }
 
     // 自定义裁切框大小对话框
     if (showCustomSizeDialog) {
@@ -294,6 +317,67 @@ fun ImageCropDialog(
                 customCropWidth = ""
                 customCropHeight = ""
             }
+        )
+    }
+}
+
+/**
+ * 裁切对话框可滚动内容
+ */
+@Composable
+private fun CropDialogContent(
+    bitmap: Bitmap?,
+    selectedRatio: Float,
+    useCustomSize: Boolean,
+    customSizeWidth: Int,
+    customSizeHeight: Int,
+    cropPositionX: Float,
+    cropPositionY: Float,
+    onPositionChange: (Float, Float) -> Unit,
+    onRatioSelect: (Float) -> Unit,
+    onCustomSizeClick: () -> Unit
+) {
+    CropPreviewArea(
+        bitmap = bitmap,
+        selectedRatio = selectedRatio,
+        useCustomSize = useCustomSize,
+        customSizeWidth = customSizeWidth,
+        customSizeHeight = customSizeHeight,
+        cropPositionX = cropPositionX,
+        cropPositionY = cropPositionY,
+        onPositionChange = onPositionChange
+    )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    bitmap?.let {
+        Text(
+            text = "${it.width} x ${it.height}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    Text(text = stringResource(R.string.crop_ratio))
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        CropRatioChip(
+            selected = selectedRatio == 1f && !useCustomSize,
+            label = stringResource(R.string.ratio_1_1),
+            onClick = { onRatioSelect(1f) }
+        )
+        CropRatioChip(
+            selected = selectedRatio == 0.75f && !useCustomSize,
+            label = stringResource(R.string.ratio_3_4),
+            onClick = { onRatioSelect(0.75f) }
+        )
+        CropRatioChip(
+            selected = useCustomSize,
+            label = stringResource(R.string.custom),
+            onClick = onCustomSizeClick
         )
     }
 }
@@ -859,13 +943,6 @@ private fun saveCustomSizeToPrefs(
         putInt("custom_crop_height", height)
         putBoolean("use_custom_crop_size", true)
     }
-}
-
-/**
- * 重置自定义尺寸
- */
-private fun resetCustomSize(customCropWidth: String, customCropHeight: String) {
-    // 这些变量需要通过 remember 管理，这里仅作为占位
 }
 
 /**
