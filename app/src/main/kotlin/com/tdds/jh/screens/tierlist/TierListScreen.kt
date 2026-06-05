@@ -379,13 +379,13 @@ fun TierListMakerApp(
             // Expanded: 平板/横屏 — 左右双栏布局
             Row(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
                 Column(
-                    modifier = Modifier.weight(0.5f).fillMaxSize()
-                        .padding(start = if (isExpanded) 0.dp else 4.dp, end = 4.dp, top = 4.dp)
+                    modifier = Modifier.weight(0.4f).fillMaxSize()
+                        .padding(start = if (isExpanded) 0.dp else 4.dp, top = 4.dp)
                 ) {
                     pendingSection()
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-                tierListSection(Modifier.weight(0.5f).fillMaxSize())
+                tierListSection(Modifier.weight(0.6f).fillMaxSize())
             }
         }
 

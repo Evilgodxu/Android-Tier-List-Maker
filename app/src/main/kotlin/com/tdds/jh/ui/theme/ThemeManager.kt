@@ -1,9 +1,11 @@
 package com.tdds.jh.ui.theme
 
+import android.content.res.Configuration
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import androidx.activity.ComponentActivity
@@ -56,14 +58,14 @@ class ThemeManager(
 fun ApplyStatusBarTheme(isDarkTheme: Boolean) {
     val view = LocalView.current
     val window = (view.context as? ComponentActivity)?.window
-    val configuration = LocalView.current.context.resources.configuration
-    DisposableEffect(isDarkTheme) {
+    val configuration = LocalConfiguration.current
+    DisposableEffect(isDarkTheme, configuration.orientation) {
         window?.let {
             WindowCompat.getInsetsController(it, view).apply {
                 isAppearanceLightStatusBars = !isDarkTheme
                 isAppearanceLightNavigationBars = !isDarkTheme
                 // 根据方向显示或隐藏状态栏
-                if (configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                if (configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
                 } else {
                     show(androidx.core.view.WindowInsetsCompat.Type.systemBars())

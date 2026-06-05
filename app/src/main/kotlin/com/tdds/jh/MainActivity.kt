@@ -77,6 +77,14 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 确保每次Activity可见时都更新状态栏，防止安装更新后状态栏设置失效
+        if (::windowInsetsController.isInitialized) {
+            updateSystemBarsVisibility()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val packageInfo = packageManager.getPackageInfo(packageName, 0)
