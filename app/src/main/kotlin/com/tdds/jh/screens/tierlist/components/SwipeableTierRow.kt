@@ -326,8 +326,8 @@ fun ReorderableCollectionItemScope.SwipeableTierRow(
                     // 如果有选中的图片且不在当前层级，移动图片到当前层级
                     if (selectedImageForDrag != null && selectedImageForDrag.tierLabel != tier.label) {
                         onMoveSelectedImageToTier?.invoke()
-                    } else if (pendingImages.isEmpty()) {
-                        // 点击空白区域打开图片选择器
+                    } else if (selectedImageForDrag == null && pendingImages.isEmpty()) {
+                        // 点击空白区域打开图片选择器（有选中图片时禁用）
                         onPickImage()
                     }
                 },

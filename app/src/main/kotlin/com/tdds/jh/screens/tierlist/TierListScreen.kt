@@ -239,6 +239,7 @@ fun TierListMakerApp(
                     vm.pendingImages = emptyList()
                 },
                 onAdd = {
+                    if (vm.selectedImageForDrag != null) return@PendingImagesSection
                     if (!vm.dialogState.isImagePickerLaunching) {
                         vm.dialogState.isImagePickerLaunching = true
                         withStoragePermission(context, vm.permissionLauncher, onSkipDraftSave) {
@@ -331,7 +332,7 @@ fun TierListMakerApp(
                                     withStoragePermission(context, vm.permissionLauncher, onSkipDraftSave) { vm.imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
                                 }
                             },
-                            disableClickAdd = vm.disableClickAdd, isDraggingPendingImage = vm.isDraggingPendingImage,
+                            disableClickAdd = vm.disableClickAdd || vm.selectedImageForDrag != null, isDraggingPendingImage = vm.isDraggingPendingImage,
                             onMoveSelectedImageToTier = {
                                 vm.selectedImageForDrag?.let { img ->
                                     ImageOperationUtils.moveImageToTier(vm.tierImages, img.id, tier.label); vm.selectedImageForDrag = null
@@ -378,13 +379,13 @@ fun TierListMakerApp(
             // Expanded: 平板/横屏 — 左右双栏布局
             Row(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
                 Column(
-                    modifier = Modifier.weight(0.35f).fillMaxSize()
+                    modifier = Modifier.weight(0.5f).fillMaxSize()
                         .padding(start = if (isExpanded) 0.dp else 4.dp, end = 4.dp, top = 4.dp)
                 ) {
                     pendingSection()
                     Spacer(modifier = Modifier.height(8.dp))
                 }
-                tierListSection(Modifier.weight(0.65f).fillMaxSize())
+                tierListSection(Modifier.weight(0.5f).fillMaxSize())
             }
         }
 

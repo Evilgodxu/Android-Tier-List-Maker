@@ -56,11 +56,18 @@ class ThemeManager(
 fun ApplyStatusBarTheme(isDarkTheme: Boolean) {
     val view = LocalView.current
     val window = (view.context as? ComponentActivity)?.window
+    val configuration = LocalView.current.context.resources.configuration
     DisposableEffect(isDarkTheme) {
         window?.let {
             WindowCompat.getInsetsController(it, view).apply {
                 isAppearanceLightStatusBars = !isDarkTheme
                 isAppearanceLightNavigationBars = !isDarkTheme
+                // 根据方向显示或隐藏状态栏
+                if (configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+                    hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                } else {
+                    show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+                }
             }
         }
         onDispose {}
