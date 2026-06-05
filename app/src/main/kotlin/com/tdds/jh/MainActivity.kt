@@ -1,5 +1,7 @@
 package com.tdds.jh
 
+import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -7,9 +9,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -18,6 +24,7 @@ import com.tdds.jh.core.utils.localization.ProvideLocalizedContext
 import com.tdds.jh.data.repository.UserPreferencesRepository
 import com.tdds.jh.data.tierlist.ResourceManager
 import com.tdds.jh.screens.tierlist.TierListMakerApp
+import com.tdds.jh.ui.adaptive.ProvideWindowSizeClass
 import com.tdds.jh.ui.theme.ApplyStatusBarTheme
 import com.tdds.jh.ui.theme.MyApplicationTheme
 import com.tdds.jh.ui.theme.ThemeManager
@@ -27,6 +34,11 @@ class MainActivity : ComponentActivity() {
 
     private var saveDraftCallback: (() -> Unit)? = null
     private var isSkippingDraftSave = false
+
+    private lateinit var windowInsetsController: WindowInsetsControllerCompat
+
+    /** 外部导入意图流，用于 onNewIntent 时通知 Composable 处理 */
+    val externalIntentFlow = MutableStateFlow<Intent?>(null)
 
     private val userPreferencesRepository: UserPreferencesRepository by lazy {
         UserPreferencesRepository(applicationContext)
@@ -60,6 +72,12 @@ class MainActivity : ComponentActivity() {
         themeManager = ThemeManager(userPreferencesRepository)
 
         enableEdgeToEdge()
+        windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        updateSystemBarsVisibility()
+
+        // 将初始 intent 发送到流中，由 Composable 统一处理外部导入
+        externalIntentFlow.value = intent
+
         val scope = lifecycleScope
         val appRes = resources
         setContent {
@@ -86,11 +104,13 @@ class MainActivity : ComponentActivity() {
             ApplyStatusBarTheme(isDarkTheme)
 
             ProvideLocalizedContext(languageManager) {
-                MyApplicationTheme(
-                    darkTheme = isDarkTheme,
-                    disableCustomFont = disableCustomFont
-                ) {
-                    TierListMakerApp(
+                ProvideWindowSizeClass {
+                    MyApplicationTheme(
+                        darkTheme = isDarkTheme,
+                        disableCustomFont = disableCustomFont
+                    ) {
+                        TierListMakerApp(
+                        externalIntentFlow = externalIntentFlow,
                         isDarkTheme = isDarkTheme,
                         followSystemTheme = followSystemTheme,
                         disableCustomFont = disableCustomFont,
@@ -135,6 +155,7 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+                }
             }
         }
     }
@@ -147,6 +168,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        externalIntentFlow.value = intent
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateSystemBarsVisibility()
+    }
+
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
         if (isSkippingDraftSave) return
@@ -157,6 +189,15 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (_: Exception) {
             }
+        }
+    }
+
+    private fun updateSystemBarsVisibility() {
+        if (!::windowInsetsController.isInitialized) return
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+        } else {
+            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 

@@ -23,6 +23,7 @@ documentfile = "1.1.0"
 easycrop = "0.1.1"
 reorderable = "3.1.0"
 datastore = "1.2.1"
+adaptive = "1.2.0"
 
 [libraries]
 
@@ -56,3 +57,8 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 
 # Lifecycle Runtime Compose (collectAsStateWithLifecycle)
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycleRuntimeKtx" }
+
+# 自适应布局 (Wide Screen / Landscape)
+androidx-material3-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive", version.ref = "adaptive" }
+androidx-material3-adaptive-layout = { group = "androidx.compose.material3.adaptive", name = "adaptive-layout", version.ref = "adaptive" }
+androidx-material3-adaptive-navigation = { group = "androidx.compose.material3.adaptive", name = "adaptive-navigation", version.ref = "adaptive" }

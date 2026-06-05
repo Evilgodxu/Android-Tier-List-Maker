@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -69,6 +70,7 @@ import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.model.tierlist.TierListConfig
 import com.tdds.jh.screens.tierlist.components.AddTierButton
 import com.tdds.jh.screens.tierlist.components.AuthorInfoSection
 import com.tdds.jh.screens.tierlist.components.DraftRestoreDialog
@@ -82,7 +84,9 @@ import com.tdds.jh.screens.tierlist.logic.utils.ColorUtils
 import com.tdds.jh.screens.tierlist.logic.utils.ImageOperationUtils
 import com.tdds.jh.screens.tierlist.logic.utils.PermissionUtils
 import com.tdds.jh.screens.tierlist.logic.utils.withStoragePermission
+import com.tdds.jh.ui.adaptive.rememberWindowSizeClass
 import com.tdds.jh.ui.theme.LocalExtendedColors
+import androidx.window.core.layout.WindowSizeClass
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -96,6 +100,7 @@ private enum class GestureType { LongPress, VerticalDrag, HorizontalSwipe }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TierListMakerApp(
+    externalIntentFlow: kotlinx.coroutines.flow.Flow<android.content.Intent?> = kotlinx.coroutines.flow.emptyFlow(),
     isDarkTheme: Boolean = false,
     followSystemTheme: Boolean = true,
     disableCustomFont: Boolean = false,
@@ -114,8 +119,11 @@ fun TierListMakerApp(
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val extendedColors = LocalExtendedColors.current
+    val windowSizeClass = rememberWindowSizeClass()
+    val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     val vm = rememberTierListViewModel(
+        externalIntentFlow,
         isDarkTheme, followSystemTheme, disableCustomFont,
         onDisableCustomFontChange, onThemeChange, onFollowSystemThemeChange,
         onRegisterSaveDraftCallback, onSkipDraftSave, onResumeDraftSave, onExitApp
@@ -194,12 +202,13 @@ fun TierListMakerApp(
                 OutlinedButton(
                     onClick = {
                         if (vm.dialogState.isResetting) return@OutlinedButton
-                        val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == vm.defaultTiers.size &&
-                                vm.tiers.zip(vm.defaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color }
+                        val currentDefaultTiers = TierListConfig.getDefaultTiers(resources.configuration.locales[0].language == "zh")
+                        val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == currentDefaultTiers.size &&
+                                vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color }
                         if (isDefault) return@OutlinedButton
                         vm.dialogState.isResetting = true
                         val imagesToReturn = vm.tierImages.map { it.originalUri ?: it.uri }
-                        vm.tiers.clear(); vm.tiers.addAll(vm.defaultTiers); vm.tierImages.clear()
+                        vm.tiers.clear(); vm.tiers.addAll(currentDefaultTiers); vm.tierImages.clear()
                         vm.tierRowPositions = emptyMap(); vm.settingsService.clearCropSettings()
                         if (imagesToReturn.isNotEmpty()) vm.pendingImages = vm.pendingImages + imagesToReturn
                         vm.tierListTitle = context.getString(R.string.default_title); vm.authorName = ""
@@ -213,7 +222,7 @@ fun TierListMakerApp(
             }
         }
     ) { innerPadding ->
-        Column(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
+        val pendingSection = @Composable {
             PendingImagesSection(
                 images = vm.pendingImages, tiers = vm.tiers, tierRowPositions = vm.tierRowPositions,
                 onClear = {
@@ -253,14 +262,17 @@ fun TierListMakerApp(
                 floatOffsetX = vm.floatOffsetX, floatOffsetY = vm.floatOffsetY,
                 onPositionUpdate = { rect -> vm.pendingSectionRect = rect }
             )
+        }
 
-            val listState = rememberLazyListState()
-            val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
-                if (from.index in vm.tiers.indices && to.index in vm.tiers.indices) {
-                    val tier = vm.tiers.removeAt(from.index); vm.tiers.add(to.index, tier)
-                }
+        val listState = rememberLazyListState()
+        val reorderableState = rememberReorderableLazyListState(listState) { from, to ->
+            if (from.index in vm.tiers.indices && to.index in vm.tiers.indices) {
+                val tier = vm.tiers.removeAt(from.index); vm.tiers.add(to.index, tier)
             }
-            LazyColumn(state = listState, modifier = Modifier.fillMaxWidth().weight(1f)) {
+        }
+
+        val tierListSection = @Composable { modifier: Modifier ->
+            LazyColumn(state = listState, modifier = modifier) {
                 itemsIndexed(vm.tiers, key = { _, t -> t.label }) { _, tier ->
                     val tierImageList = vm.tierImages.filter { it.tierLabel == tier.label }
                     ReorderableItem(reorderableState, key = tier.label) { isDragging ->
@@ -348,6 +360,26 @@ fun TierListMakerApp(
                 }
                 item { AddTierButton(onClick = { vm.tiers.add(TierItem(ColorUtils.generateNextLabel(vm.tiers.map { it.label }), ColorUtils.generateRandomColor())) }) }
                 item { AuthorInfoSection(authorName = vm.authorName, onClick = { vm.dialogState.showEditAuthorDialog = true }) }
+            }
+        }
+
+        if (!isExpanded) {
+            // Compact: 手机竖屏 — 待分级图片在顶部，层级列表在下方垂直排列
+            Column(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
+                pendingSection()
+                tierListSection(Modifier.fillMaxWidth().weight(1f))
+            }
+        } else {
+            // Expanded: 平板/横屏 — 左右双栏布局
+            Row(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
+                Column(
+                    modifier = Modifier.weight(0.35f).fillMaxSize()
+                        .padding(start = 4.dp, end = 4.dp, top = 4.dp)
+                ) {
+                    pendingSection()
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                tierListSection(Modifier.weight(0.65f).fillMaxSize())
             }
         }
 

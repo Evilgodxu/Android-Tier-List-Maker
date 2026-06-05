@@ -121,6 +121,7 @@ suspend fun shareBitmap(
 
             // 启动分享对话框
             val chooser = Intent.createChooser(shareIntent, context.getString(R.string.share_image))
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             withContext(Dispatchers.Main) {
                 context.startActivity(chooser)
             }

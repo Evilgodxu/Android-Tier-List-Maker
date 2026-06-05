@@ -72,21 +72,22 @@ class PackageOperationHandler(
     fun getPackageImageCount(packageItem: PackageItem.Imported, onCountCalculated: (Int) -> Unit) { scope.launch { val count = withContext(Dispatchers.IO) { ResourcePackageManager.countImagesInImportedPackage(packageItem.file) }; onCountCalculated(count) } }
 
     fun handleExternalPackageImport(uri: Uri, fileName: String?, onLoadingStateChange: (Boolean) -> Unit) {
+        dialogState.isImportingPackage = true; onSkipDraftSave?.invoke()
         scope.launch {
             try {
                 val tempDir = context.cacheDir.resolve("zip_check_${System.currentTimeMillis()}"); tempDir.mkdirs()
                 val tempZipFile = java.io.File(tempDir, "temp.zip")
                 context.contentResolver.openInputStream(uri)?.use { input -> tempZipFile.outputStream().use { output -> input.copyTo(output) } }
                 val zipFile = net.lingala.zip4j.ZipFile(tempZipFile); val isEncrypted = zipFile.isEncrypted; tempDir.deleteRecursively()
-                if (isEncrypted) { dialogState.externalPackageUri = uri; dialogState.externalPackageFileName = fileName ?: "imported_${System.currentTimeMillis()}.zip"; dialogState.externalPackagePassword = null; dialogState.externalPackagePasswordError = false; dialogState.showExternalPackagePasswordDialog = true }
+                if (isEncrypted) { dialogState.externalPackageUri = uri; dialogState.externalPackageFileName = fileName ?: "imported_${System.currentTimeMillis()}.zip"; dialogState.externalPackagePassword = null; dialogState.externalPackagePasswordError = false; dialogState.showExternalPackagePasswordDialog = true; dialogState.isImportingPackage = false; onResumeDraftSave?.invoke() }
                 else { importExternalPackageInternal(uri, fileName, onLoadingStateChange) }
-            } catch (e: Exception) { showToast("图包导入失败: ${e.message}", android.widget.Toast.LENGTH_SHORT); onLoadingStateChange(false) }
+            } catch (e: Exception) { dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); showToast("图包导入失败: ${e.message}", android.widget.Toast.LENGTH_SHORT); onLoadingStateChange(false) }
         }
     }
 
     fun continueExternalPackageImportWithPassword(password: String, onLoadingStateChange: (Boolean) -> Unit) {
         val uri = dialogState.externalPackageUri; val fileName = dialogState.externalPackageFileName
-        if (uri == null) { dialogState.showExternalPackagePasswordDialog = false; onLoadingStateChange(false); return }
+        if (uri == null) { dialogState.showExternalPackagePasswordDialog = false; dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false); return }
         dialogState.externalPackagePassword = password; dialogState.showExternalPackagePasswordDialog = false
         importExternalPackageInternal(uri, fileName, onLoadingStateChange, password)
     }
@@ -97,9 +98,9 @@ class PackageOperationHandler(
                 val actualFileName = fileName ?: "imported_${System.currentTimeMillis()}.zip"
                 val savedPackageFile = withContext(Dispatchers.IO) { presetManager.saveImportedPackage(uri, actualFileName, password) }
                 if (savedPackageFile != null) showToast("图包导入成功: ${savedPackageFile.nameWithoutExtension}", android.widget.Toast.LENGTH_SHORT) else showToast("图包导入失败", android.widget.Toast.LENGTH_SHORT)
-            } catch (e: ZipPasswordRequiredException) { dialogState.externalPackagePasswordError = true; dialogState.showExternalPackagePasswordDialog = true }
+            } catch (e: ZipPasswordRequiredException) { dialogState.externalPackagePasswordError = true; dialogState.showExternalPackagePasswordDialog = true; return@launch }
             catch (e: Exception) { showToast("图包导入失败: ${e.message}", android.widget.Toast.LENGTH_SHORT) }
-            finally { dialogState.externalPackageUri = null; dialogState.externalPackageFileName = ""; dialogState.externalPackagePassword = null; onLoadingStateChange(false) }
+            finally { dialogState.externalPackageUri = null; dialogState.externalPackageFileName = ""; dialogState.externalPackagePassword = null; dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
         }
     }
 }

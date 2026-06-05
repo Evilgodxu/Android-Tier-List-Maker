@@ -138,14 +138,15 @@ class PresetOperationHandler(
     }
 
     fun handleExternalPresetImport(uri: Uri, onLoadingStateChange: (Boolean) -> Unit) {
+        dialogState.isImportingPreset = true; onSkipDraftSave?.invoke()
         scope.launch {
             try {
                 val importResult = withContext(Dispatchers.IO) { presetManager.importPreset(uri) }
                 when (importResult.status) {
-                    PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> { applyImportedPreset(importResult, emptyList()); presetManager.cleanupDraftOnly(); onLoadingStateChange(false) }
-                    PresetManager.ImportStatus.NEEDS_OVERWRITE -> { dialogState.pendingImportResult = importResult; dialogState.showImportOverwriteDialog = true; onLoadingStateChange(false) }
+                    PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> { applyImportedPreset(importResult, emptyList()); presetManager.cleanupDraftOnly(); dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
+                    PresetManager.ImportStatus.NEEDS_OVERWRITE -> { dialogState.pendingImportResult = importResult; dialogState.showImportOverwriteDialog = true; dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
                 }
-            } catch (e: Exception) { onLoadingStateChange(false); showToast("导入预设失败: ${e.message}", android.widget.Toast.LENGTH_SHORT) }
+            } catch (e: Exception) { dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false); showToast("导入预设失败: ${e.message}", android.widget.Toast.LENGTH_SHORT) }
         }
     }
 }

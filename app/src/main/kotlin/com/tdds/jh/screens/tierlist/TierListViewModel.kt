@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -43,9 +42,9 @@ import com.tdds.jh.screens.tierlist.logic.utils.withStoragePermission
 import com.tdds.jh.screens.tierlist.service.SettingsService
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -99,6 +98,10 @@ class TierListViewModel(
     // ==================== 语言切换标记 ====================
     val shouldShowLanguageOnFirstLaunch = settingsService.showLanguageOnFirstLaunch
 
+    // ==================== 草稿控制回调 ====================
+    var onSkipDraftSaveCallback: (() -> Unit)? = null
+    var onResumeDraftSaveCallback: (() -> Unit)? = null
+
     // ==================== Handler（由工厂函数赋值） ====================
     lateinit var imagePickerHandler: ImagePickerHandler
     lateinit var presetOperationHandler: PresetOperationHandler
@@ -116,16 +119,6 @@ class TierListViewModel(
     lateinit var presetExportLauncher: ManagedActivityResultLauncher<String, Uri?>
     lateinit var packageExportLauncher: ManagedActivityResultLauncher<String, Uri?>
 
-    /** 应用导入的预设数据到当前页面 */
-    fun applyPresetData(result: PresetManager.ApplyPresetResult) {
-        tiers.clear(); tiers.addAll(result.tiers.map { TierItem(it.label, try { Color(android.graphics.Color.parseColor("#${it.color}")) } catch (_: Exception) { Color.Gray }) })
-        tierImages.clear(); tierImages.addAll(result.tierImages.map { TierImage(it.id, it.tierLabel, it.uri, it.name, it.badgeUri, it.badgeUri2, it.badgeUri3, it.cropPositionX, it.cropPositionY, it.cropScale, it.isCropped, it.originalUri, it.cropRatio, it.useCustomCrop, it.customCropWidth, it.customCropHeight) })
-        pendingImages = result.pendingImages; tierListTitle = result.title; authorName = result.author
-        settingsService.cropPositionX = result.cropPositionX; settingsService.cropPositionY = result.cropPositionY
-        settingsService.customCropWidth = result.customCropWidth; settingsService.customCropHeight = result.customCropHeight
-        settingsService.useCustomCropSize = result.useCustomCropSize; settingsService.cropRatio = result.cropRatio
-        tierRowPositions = emptyMap()
-    }
 }
 
 /**
@@ -133,6 +126,7 @@ class TierListViewModel(
  */
 @Composable
 fun rememberTierListViewModel(
+    externalIntentFlow: Flow<Intent?>,
     isDarkTheme: Boolean,
     followSystemTheme: Boolean,
     disableCustomFont: Boolean,
@@ -153,6 +147,10 @@ fun rememberTierListViewModel(
     val vm = remember {
         TierListViewModel(context, scope, settingsService, presetManager, defaultTiers)
     }
+
+    // ==================== 注入草稿控制回调 ====================
+    vm.onSkipDraftSaveCallback = onSkipDraftSave
+    vm.onResumeDraftSaveCallback = onResumeDraftSave
 
     // ==================== Handler ====================
     vm.imagePickerHandler = rememberImagePickerHandler(
@@ -179,12 +177,15 @@ fun rememberTierListViewModel(
     vm.imagePickerHandler.setPendingImagesProvider { vm.pendingImages }
 
     // ==================== 外部文件打开副作用 ====================
-    LaunchedEffect(Unit) {
-        val activity = context as? ComponentActivity ?: return@LaunchedEffect
-        val intent = activity.intent ?: return@LaunchedEffect
-        when {
-            intent.action == Intent.ACTION_VIEW -> handleViewIntent(vm, activity, intent)
-            intent.action == Intent.ACTION_SEND || intent.action == Intent.ACTION_SEND_MULTIPLE -> handleSendIntent(vm, activity, intent)
+    // 通过 Flow 驱动，支持 onNewIntent 时重新触发（配合 singleTask launchMode）
+    val activity = context as? ComponentActivity
+    LaunchedEffect(externalIntentFlow) {
+        externalIntentFlow.distinctUntilChanged().collect { intent ->
+            if (intent == null) return@collect
+            when {
+                intent.action == Intent.ACTION_VIEW -> handleViewIntent(vm, activity, intent)
+                intent.action == Intent.ACTION_SEND || intent.action == Intent.ACTION_SEND_MULTIPLE -> handleSendIntent(vm, activity, intent)
+            }
         }
     }
 
@@ -286,18 +287,18 @@ fun rememberTierListViewModel(
     return vm
 }
 
-private fun handleViewIntent(vm: TierListViewModel, activity: ComponentActivity, intent: Intent) {
+private fun handleViewIntent(vm: TierListViewModel, activity: ComponentActivity?, intent: Intent) {
     val dataUri = intent.data ?: return
     val fileName = FileUtils.getFileNameFromUri(vm.context, dataUri)
     val uriString = dataUri.toString()
     val isTdds = (fileName?.endsWith(".tdds", ignoreCase = true) == true) || uriString.endsWith(".tdds", ignoreCase = true) || uriString.contains(".tdds", ignoreCase = true)
     val isZip = (fileName?.endsWith(".zip", ignoreCase = true) == true) || uriString.endsWith(".zip", ignoreCase = true) || uriString.contains(".zip", ignoreCase = true)
 
-    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; importTddsFile(vm, dataUri); activity.intent = null; return }
-    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading) activity.intent = null } }
+    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
 }
 
-private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity, intent: Intent) {
+private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity?, intent: Intent) {
     val dataUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
     else @Suppress("DEPRECATION")
         intent.getParcelableExtra(Intent.EXTRA_STREAM) ?: return
@@ -306,23 +307,6 @@ private fun handleSendIntent(vm: TierListViewModel, activity: ComponentActivity,
     val isTdds = (fileName?.endsWith(".tdds", ignoreCase = true) == true) || uriString.endsWith(".tdds", ignoreCase = true) || uriString.contains(".tdds", ignoreCase = true)
     val isZip = (fileName?.endsWith(".zip", ignoreCase = true) == true) || uriString.endsWith(".zip", ignoreCase = true) || uriString.contains(".zip", ignoreCase = true)
 
-    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading) activity.intent = null } }
-    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading) activity.intent = null } }
-}
-
-private fun importTddsFile(vm: TierListViewModel, dataUri: Uri) {
-    vm.scope.launch {
-        try {
-            val importResult = withContext(Dispatchers.IO) { vm.presetManager.importPreset(dataUri) }
-            when (importResult.status) {
-                PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> {
-                    val result = withContext(Dispatchers.IO) { vm.presetManager.applyPreset(importResult.presetFile) }
-                    vm.applyPresetData(result); vm.presetManager.cleanupDraftOnly()
-                    showToastWithoutIcon(vm.context, vm.context.getString(R.string.preset_import_success), Toast.LENGTH_SHORT)
-                }
-                PresetManager.ImportStatus.NEEDS_OVERWRITE -> { vm.dialogState.pendingImportResult = importResult; vm.dialogState.showImportOverwriteDialog = true }
-            }
-        } catch (e: Exception) { showToastWithoutIcon(vm.context, vm.context.getString(R.string.preset_import_failed, e.message), Toast.LENGTH_SHORT) }
-        finally { vm.isImportingPreset = false }
-    }
+    if (isTdds) { vm.isImportingPreset = true; vm.skipDraftRestore = true; vm.presetOperationHandler.handleExternalPresetImport(dataUri) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
+    if (isZip) { vm.skipDraftRestore = true; vm.packageOperationHandler.handleExternalPackageImport(dataUri, fileName) { isLoading -> vm.isImportingPreset = isLoading; if (!isLoading && activity != null) activity.intent = null } }
 }
