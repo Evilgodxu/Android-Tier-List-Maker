@@ -71,7 +71,7 @@ fun SettingsMenuDialog(
             onClick = onShowInstructions
         ),
         SettingsItem(
-            title = stringResource(R.string.about),
+            title = stringResource(R.string.donate),
             onClick = onShowFeedback
         )
     )

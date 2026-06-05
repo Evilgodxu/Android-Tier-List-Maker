@@ -255,7 +255,7 @@ class DialogHandlers(
 
     fun onShowFeedback() {
         dialogState.showSettingsMenu = false
-        dialogState.showAboutDialog = true
+        dialogState.showDonateDialog = true
     }
 
     fun onImagePackage() {
@@ -401,10 +401,10 @@ class DialogHandlers(
         dialogState.showInstructionsDialog = false
     }
 
-    // ==================== 关于对话框处理器 ====================
+    // ==================== 捐赠对话框处理器 ====================
 
-    fun onAboutDismiss() {
-        dialogState.showAboutDialog = false
+    fun onDonateDismiss() {
+        dialogState.showDonateDialog = false
     }
 
     // ==================== 管理预设对话框处理器 ====================

@@ -25,7 +25,7 @@ class DialogState {
     var showResourceManageDialog by mutableStateOf(false)
 
     // ==================== 信息对话框 ====================
-    var showAboutDialog by mutableStateOf(false)
+    var showDonateDialog by mutableStateOf(false)
     var showInstructionsDialog by mutableStateOf(false)
 
     // ==================== 图包管理对话框 ====================
@@ -118,7 +118,7 @@ class DialogState {
         showSettingsMenu = false
         showProgramSettingsDialog = false
         showResourceManageDialog = false
-        showAboutDialog = false
+        showDonateDialog = false
         showInstructionsDialog = false
         showManagePackagesDialog = false
         showPackageConfirmDialog = false

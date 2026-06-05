@@ -44,7 +44,7 @@ import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.ImportTarget
 import com.tdds.jh.data.tierlist.PackageManager
 import com.tdds.jh.data.tierlist.PresetInfo
-import com.tdds.jh.screens.tierlist.components.dialogs.AboutDialog
+import com.tdds.jh.screens.tierlist.components.dialogs.DonateDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.PreviewDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.ColorPickerDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.EditAuthorDialog
@@ -452,11 +452,10 @@ fun TierListDialogs(
         InstructionsDialog(onDismiss = handlers::onInstructionsDismiss)
     }
 
-    // ==================== 关于程序对话框 ====================
-    if (dialogState.showAboutDialog) {
-        AboutDialog(
-            onDismiss = handlers::onAboutDismiss,
-            context = context
+    // ==================== 捐赠打赏对话框 ====================
+    if (dialogState.showDonateDialog) {
+        DonateDialog(
+            onDismiss = handlers::onDonateDismiss
         )
     }
 
