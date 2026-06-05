@@ -8,8 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -53,11 +56,11 @@ fun ProgramSettingsDialog(
     val extendedColors = LocalExtendedColors.current
     Dialog(onDismissRequest = onDismiss) {
         Card(
-            modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight(),
+            modifier = Modifier.fillMaxWidth(0.9f).wrapContentHeight().heightIn(max = 580.dp),
             shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground)
         ) {
-            Column(modifier = Modifier.padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = stringResource(R.string.program_settings), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 20.dp))
                 SettingsClickableItem(text = stringResource(R.string.change_language), onClick = onShowLanguageDialog)
                 SettingsSwitchItem(text = stringResource(R.string.follow_system_theme), checked = followSystemTheme, onCheckedChange = onToggleFollowSystemTheme)
@@ -116,8 +119,8 @@ fun LanguageSelectionDialog(currentLanguage: String, onDismiss: () -> Unit, onLa
     val languages = listOf("zh" to "简体中文", "en" to "English", "ja" to "日本語", "ko" to "한국어", "ru" to "Русский", "de" to "Deutsch", "fr" to "Français", "es" to "Español", "ar" to "العربية", "pt" to "Português")
     val extendedColors = LocalExtendedColors.current
     Dialog(onDismissRequest = onDismiss) {
-        Card(modifier = Modifier.fillMaxWidth(0.85f).padding(16.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground)) {
-            Column(modifier = Modifier.padding(vertical = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Card(modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = 500.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground)) {
+            Column(modifier = Modifier.padding(vertical = 16.dp).verticalScroll(rememberScrollState()), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = stringResource(R.string.select_language), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 16.dp))
                 languages.forEach { (code, name) ->
                     val isSelected = code == currentLanguage
