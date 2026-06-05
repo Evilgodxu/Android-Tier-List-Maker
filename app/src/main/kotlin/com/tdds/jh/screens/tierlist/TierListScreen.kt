@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -160,7 +159,6 @@ fun TierListMakerApp(
         topBar = {
             Box(
                 modifier = Modifier.fillMaxWidth().background(extendedColors.background)
-                    .windowInsetsPadding(if (isExpanded) WindowInsets(0, 0, 0, 0) else WindowInsets.statusBars)
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -184,9 +182,54 @@ fun TierListMakerApp(
             }
         },
         bottomBar = {
+            if (!isExpanded) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().background(extendedColors.background)
+                        .padding(horizontal = 16.dp, vertical = 12.dp).windowInsetsPadding(WindowInsets.navigationBars),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            scope.launch {
+                                vm.dialogState.previewIsDarkTheme = isDarkTheme
+                                vm.dialogState.previewBitmap = generateTierListBitmap(context, vm.tiers, vm.tierImages, vm.tierListTitle, vm.authorName, vm.dialogState.previewIsDarkTheme, vm.externalBadgeEnabled, disableCustomFont, vm.nameBelowImage)
+                                vm.dialogState.showPreviewDialog = true
+                            }
+                        },
+                        modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                    ) { Text(stringResource(R.string.save), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
+                    OutlinedButton(
+                        onClick = {
+                            if (vm.dialogState.isResetting) return@OutlinedButton
+                            val currentDefaultTiers = TierListConfig.getDefaultTiers(resources.configuration.locales[0].language == "zh")
+                            val isDefault = vm.tierImages.isEmpty() && vm.tiers.size == currentDefaultTiers.size &&
+                                    vm.tiers.zip(currentDefaultTiers).all { (c, d) -> c.label == d.label && c.color == d.color } &&
+                                    vm.tierListTitle == context.getString(R.string.default_title) && vm.authorName.isEmpty()
+                            if (isDefault) return@OutlinedButton
+                            vm.dialogState.isResetting = true
+                            val imagesToReturn = vm.tierImages.map { it.originalUri ?: it.uri }
+                            vm.tiers.clear(); vm.tiers.addAll(currentDefaultTiers); vm.tierImages.clear()
+                            vm.tierRowPositions = emptyMap(); vm.settingsService.clearCropSettings()
+                            if (imagesToReturn.isNotEmpty()) vm.pendingImages = vm.pendingImages + imagesToReturn
+                            vm.tierListTitle = context.getString(R.string.default_title); vm.authorName = ""
+                            showToastWithoutIcon(context, context.getString(R.string.reset_success))
+                            scope.launch { delay(500); vm.dialogState.isResetting = false }
+                        },
+                        modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                    ) { Text(stringResource(R.string.reset), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
+                }
+            }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { innerPadding ->
+        val buttonsSection = @Composable {
             Row(
                 modifier = Modifier.fillMaxWidth().background(extendedColors.background)
-                    .padding(horizontal = 16.dp, vertical = 12.dp).windowInsetsPadding(WindowInsets.navigationBars),
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
             ) {
                 OutlinedButton(
@@ -223,9 +266,8 @@ fun TierListMakerApp(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) { Text(stringResource(R.string.reset), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
             }
-        },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
-    ) { innerPadding ->
+        }
+
         val pendingSection = @Composable {
             PendingImagesSection(
                 images = vm.pendingImages, tiers = vm.tiers, tierRowPositions = vm.tierRowPositions,
@@ -384,6 +426,7 @@ fun TierListMakerApp(
                 ) {
                     pendingSection()
                     Spacer(modifier = Modifier.height(8.dp))
+                    buttonsSection()
                 }
                 tierListSection(Modifier.weight(0.6f).fillMaxSize())
             }

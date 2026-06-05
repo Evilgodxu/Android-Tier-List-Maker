@@ -1,14 +1,7 @@
 package com.tdds.jh.ui.theme
 
-import android.content.res.Configuration
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
-import androidx.activity.ComponentActivity
 import com.tdds.jh.data.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -53,18 +46,4 @@ class ThemeManager(
     }
 }
 
-// 应用状态栏和导航栏主题（仅设置图标颜色，不控制显示/隐藏）
-@Composable
-fun ApplyStatusBarTheme(isDarkTheme: Boolean) {
-    val view = LocalView.current
-    val window = (view.context as? ComponentActivity)?.window
-    DisposableEffect(isDarkTheme) {
-        window?.let {
-            WindowCompat.getInsetsController(it, view).apply {
-                isAppearanceLightStatusBars = !isDarkTheme
-                isAppearanceLightNavigationBars = !isDarkTheme
-            }
-        }
-        onDispose {}
-    }
-}
+

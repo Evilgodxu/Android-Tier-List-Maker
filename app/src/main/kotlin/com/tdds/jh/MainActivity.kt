@@ -8,13 +8,9 @@ import android.os.Bundle
 import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +24,6 @@ import com.tdds.jh.data.repository.UserPreferencesRepository
 import com.tdds.jh.data.tierlist.ResourceManager
 import com.tdds.jh.screens.tierlist.TierListMakerApp
 import com.tdds.jh.ui.adaptive.ProvideWindowSizeClass
-import com.tdds.jh.ui.theme.ApplyStatusBarTheme
 import com.tdds.jh.ui.theme.MyApplicationTheme
 import com.tdds.jh.ui.theme.ThemeManager
 import com.tdds.jh.ui.theme.ThemeMode
@@ -38,8 +33,6 @@ class MainActivity : ComponentActivity() {
 
     private var saveDraftCallback: (() -> Unit)? = null
     private var isSkippingDraftSave = false
-
-    private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     /** 外部导入意图流，用于 onNewIntent 时通知 Composable 处理 */
     val externalIntentFlow = MutableStateFlow<Intent?>(null)
@@ -77,14 +70,6 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    override fun onResume() {
-        super.onResume()
-        // 确保每次Activity可见时都更新状态栏，防止安装更新后状态栏设置失效
-        if (::windowInsetsController.isInitialized) {
-            updateSystemBarsVisibility()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val packageInfo = packageManager.getPackageInfo(packageName, 0)
@@ -96,9 +81,6 @@ class MainActivity : ComponentActivity() {
 
         languageManager = LanguageManager(this, userPreferencesRepository)
         themeManager = ThemeManager(userPreferencesRepository)
-
-        enableEdgeToEdge()
-        setupSystemBars()
 
         // 将初始 intent 发送到流中，由 Composable 统一处理外部导入
         externalIntentFlow.value = intent
@@ -131,8 +113,6 @@ class MainActivity : ComponentActivity() {
             val systemDark = isSystemInDarkTheme()
             val isDarkTheme = themeManager.resolveDarkThemeStatic(themeMode, systemDark)
             val followSystemTheme = themeMode == ThemeMode.SYSTEM
-
-            ApplyStatusBarTheme(isDarkTheme)
 
             ProvideLocalizedContext(languageManager) {
                 ProvideWindowSizeClass {
@@ -210,10 +190,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // 延迟到布局完成后更新系统栏
-        window.decorView.post {
-            updateSystemBarsVisibility()
-        }
         // 旋转后重新应用语言，防止 locale 被系统配置覆盖
         if (::languageManager.isInitialized) {
             val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
@@ -232,26 +208,6 @@ class MainActivity : ComponentActivity() {
                 }
             } catch (_: Exception) {
             }
-        }
-    }
-
-    private fun setupSystemBars() {
-        windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        updateSystemBarsVisibility()
-    }
-
-    private fun updateSystemBarsVisibility() {
-        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            // 横屏时强制隐藏状态栏和导航栏
-            // 先设置行为，再隐藏系统栏
-            windowInsetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
-        } else {
-            // 竖屏时显示状态栏和导航栏
-            windowInsetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_DEFAULT
-            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 

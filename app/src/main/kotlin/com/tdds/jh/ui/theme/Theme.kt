@@ -28,8 +28,7 @@ data class ExtendedColors(
     val tierEColor: Color = tier_e_color,
     val buttonContainer: Color,
     val buttonContent: Color,
-    val navigationBar: Color,
-    val statusBar: Color
+    val navigationBar: Color
 )
 
 val LocalExtendedColors = staticCompositionLocalOf {
@@ -41,8 +40,7 @@ val LocalExtendedColors = staticCompositionLocalOf {
         accentColor = Color.Unspecified,
         buttonContainer = Color.Unspecified,
         buttonContent = Color.Unspecified,
-        navigationBar = Color.Unspecified,
-        statusBar = Color.Unspecified
+        navigationBar = Color.Unspecified
     )
 }
 
@@ -57,8 +55,7 @@ fun getExtendedColors(isDarkTheme: Boolean): ExtendedColors {
             accentColor = extended_dark_accentColor,
             buttonContainer = extended_dark_accentColor,
             buttonContent = extended_dark_background,
-            navigationBar = extended_dark_background,
-            statusBar = extended_dark_background
+            navigationBar = extended_dark_background
         )
     } else {
         ExtendedColors(
@@ -69,8 +66,7 @@ fun getExtendedColors(isDarkTheme: Boolean): ExtendedColors {
             accentColor = extended_light_accentColor,
             buttonContainer = extended_light_accentColor,
             buttonContent = extended_light_background,
-            navigationBar = extended_light_background,
-            statusBar = extended_light_background
+            navigationBar = extended_light_background
         )
     }
 }
