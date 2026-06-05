@@ -1,4 +1,4 @@
-package com.tdds.jh.screens.tierlist.state
+package com.tdds.jh.screens.tierlist
 
 import android.content.Context
 import android.net.Uri
@@ -450,7 +450,6 @@ class DialogHandlers(
 
     fun onPresetNameDialogDismiss() {
         dialogState.showPresetNameDialog = false
-        // 如果是导入时新建预设流程被取消，清理相关状态
         if (dialogState.isImportCreatingNewPreset) {
             dialogState.isImportCreatingNewPreset = false
             dialogState.pendingImportResult?.presetFile?.delete()

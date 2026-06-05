@@ -14,7 +14,7 @@ import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.screens.tierlist.logic.utils.FileUtils
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.data.tierlist.PresetData
-import com.tdds.jh.screens.tierlist.state.DialogState
+import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.screens.tierlist.service.SettingsService
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope

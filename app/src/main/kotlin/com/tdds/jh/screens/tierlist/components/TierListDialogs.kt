@@ -54,8 +54,8 @@ import com.tdds.jh.screens.tierlist.components.dialogs.LanguageSelectionDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.ProgramSettingsDialog
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import com.tdds.jh.screens.tierlist.service.SettingsService
-import com.tdds.jh.screens.tierlist.state.DialogHandlers
-import com.tdds.jh.screens.tierlist.state.DialogState
+import com.tdds.jh.screens.tierlist.DialogHandlers
+import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.screens.tierlist.logic.utils.ImageOperationUtils
 import com.tdds.jh.screens.tierlist.logic.utils.saveBitmapToGallery
 import com.tdds.jh.screens.tierlist.logic.utils.shareBitmap

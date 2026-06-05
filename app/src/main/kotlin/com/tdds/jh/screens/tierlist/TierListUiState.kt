@@ -1,4 +1,4 @@
-package com.tdds.jh.screens.tierlist.state
+package com.tdds.jh.screens.tierlist
 
 import android.graphics.Bitmap
 import android.net.Uri

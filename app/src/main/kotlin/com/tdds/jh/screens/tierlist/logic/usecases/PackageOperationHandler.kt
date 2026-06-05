@@ -9,7 +9,7 @@ import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.PackageManager as ResourcePackageManager
 import com.tdds.jh.data.tierlist.ZipPasswordRequiredException
-import com.tdds.jh.screens.tierlist.state.DialogState
+import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
