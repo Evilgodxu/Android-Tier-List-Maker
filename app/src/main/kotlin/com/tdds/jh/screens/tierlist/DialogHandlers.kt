@@ -530,6 +530,8 @@ class DialogHandlers(
         scope.launch {
             try {
                 onShare()
+                dialogState.showPreviewDialog = false
+                dialogState.previewBitmap = null
             } finally {
                 dialogState.isSharingChart = false
             }

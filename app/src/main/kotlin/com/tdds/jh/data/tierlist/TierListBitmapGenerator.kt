@@ -242,7 +242,6 @@ suspend fun generateTierListBitmap(
         val titleColor = if (isDarkTheme) "#FFFFFF" else "#2C3E50"
         val cardBgColor = if (isDarkTheme) "#2D2D2D" else "#FFFFFF"
         val imageAreaBgColor = if (isDarkTheme) "#1A1A1A" else "#F8F9FA"
-        val imageBorderColor = if (isDarkTheme) "#3D3D3D" else "#E0E0E0"
         val authorColor = if (isDarkTheme) "#AAAAAA" else "#7F8C8D"
         val timeColor = if (isDarkTheme) "#888888" else "#95A5A6"
 
@@ -298,11 +297,6 @@ suspend fun generateTierListBitmap(
         val tierPaint = Paint()
         val imageAreaPaint = Paint().apply {
             color = android.graphics.Color.parseColor(imageAreaBgColor)
-        }
-        val imageBorderPaint = Paint().apply {
-            color = android.graphics.Color.parseColor(imageBorderColor)
-            style = Paint.Style.STROKE
-            strokeWidth = 2f
         }
         val roundPaint = Paint().apply {
             isAntiAlias = true
@@ -420,13 +414,7 @@ suspend fun generateTierListBitmap(
                             val bitmapDrawY = centerY - scaledHeight / 2f
                             canvas.drawBitmap(roundedBitmap, bitmapDrawX, bitmapDrawY, null)
 
-                            val borderRect = RectF(
-                                bitmapDrawX,
-                                bitmapDrawY,
-                                bitmapDrawX + scaledWidth,
-                                bitmapDrawY + scaledHeight
-                            )
-                            canvas.drawRoundRect(borderRect, 12f, 12f, imageBorderPaint)
+
 
                             if (tierImage.badgeUri != null || tierImage.badgeUri2 != null || tierImage.badgeUri3 != null) {
                                 val badgeSizeLocal = (imageSize * 0.22).toInt()

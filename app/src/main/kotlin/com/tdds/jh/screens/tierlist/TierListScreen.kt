@@ -446,7 +446,7 @@ fun TierListMakerApp(
             ) {
                 Column(
                     modifier = Modifier.weight(0.4f).fillMaxSize()
-                        .padding(start = if (isExpanded) 0.dp else 4.dp, top = 4.dp)
+                        .padding(start = if (isExpanded) 0.dp else 4.dp)
                 ) {
                     pendingSection()
                     Spacer(modifier = Modifier.height(8.dp))

@@ -116,12 +116,12 @@ suspend fun shareBitmap(
                 type = "image/webp"
                 putExtra(Intent.EXTRA_STREAM, uri)
                 putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.share_image))
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
 
-            // 启动分享对话框
-            val chooser = Intent.createChooser(shareIntent, context.getString(R.string.share_image))
-            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            // 启动分享对话框 - 权限需要设置在chooser上
+            val chooser = Intent.createChooser(shareIntent, context.getString(R.string.share_image)).apply {
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
             withContext(Dispatchers.Main) {
                 context.startActivity(chooser)
             }
