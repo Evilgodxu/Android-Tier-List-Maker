@@ -530,8 +530,10 @@ class DialogHandlers(
         scope.launch {
             try {
                 onShare()
-                dialogState.showPreviewDialog = false
-                dialogState.previewBitmap = null
+                // 分享操作启动后，不立即关闭预览对话框
+                // 因为分享是一个独立的系统操作，不需要关闭当前对话框
+            } catch (e: Exception) {
+                // 分享失败时显示错误状态，保持对话框打开
             } finally {
                 dialogState.isSharingChart = false
             }

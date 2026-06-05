@@ -119,8 +119,10 @@ suspend fun shareBitmap(
             }
 
             // 启动分享对话框 - 权限需要设置在chooser上
+            // 添加FLAG_ACTIVITY_NEW_TASK标志以兼容非Activity Context启动
             val chooser = Intent.createChooser(shareIntent, context.getString(R.string.share_image)).apply {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             withContext(Dispatchers.Main) {
                 context.startActivity(chooser)
