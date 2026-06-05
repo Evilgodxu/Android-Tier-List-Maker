@@ -1,5 +1,6 @@
 package com.tdds.jh.screens.tierlist
 
+import android.content.res.Configuration
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
@@ -159,7 +160,8 @@ fun TierListMakerApp(
         topBar = {
             Box(
                 modifier = Modifier.fillMaxWidth().background(extendedColors.background)
-                    .windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 4.dp, vertical = 8.dp),
+                    .windowInsetsPadding(if (isExpanded) WindowInsets(0, 0, 0, 0) else WindowInsets.statusBars)
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
@@ -221,7 +223,8 @@ fun TierListMakerApp(
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
                 ) { Text(stringResource(R.string.reset), fontSize = 16.sp, fontWeight = FontWeight.Medium) }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         val pendingSection = @Composable {
             PendingImagesSection(
@@ -261,7 +264,8 @@ fun TierListMakerApp(
                     } catch (_: Exception) {}
                 },
                 floatOffsetX = vm.floatOffsetX, floatOffsetY = vm.floatOffsetY,
-                onPositionUpdate = { rect -> vm.pendingSectionRect = rect }
+                onPositionUpdate = { rect -> vm.pendingSectionRect = rect },
+                isExpanded = isExpanded
             )
         }
 
@@ -375,7 +379,7 @@ fun TierListMakerApp(
             Row(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
                 Column(
                     modifier = Modifier.weight(0.35f).fillMaxSize()
-                        .padding(start = 4.dp, end = 4.dp, top = 4.dp)
+                        .padding(start = if (isExpanded) 0.dp else 4.dp, end = 4.dp, top = 4.dp)
                 ) {
                     pendingSection()
                     Spacer(modifier = Modifier.height(8.dp))

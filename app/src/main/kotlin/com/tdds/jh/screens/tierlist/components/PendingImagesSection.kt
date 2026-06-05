@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -18,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +65,8 @@ fun PendingImagesSection(
     onDeleteImage: (Uri) -> Unit = {},
     floatOffsetX: Float = 125f,
     floatOffsetY: Float = 85f,
-    onPositionUpdate: ((Rect) -> Unit)? = null
+    onPositionUpdate: ((Rect) -> Unit)? = null,
+    isExpanded: Boolean = false
 ) {
     // 固定尺寸配置
     val imageSize = 85.dp
@@ -105,7 +108,9 @@ fun PendingImagesSection(
             )
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 12.dp).padding(top = 4.dp, bottom = 4.dp)
+                modifier = Modifier
+                    .padding(horizontal = if (isExpanded) 4.dp else 12.dp)
+                    .padding(top = 4.dp, bottom = 4.dp)
             ) {
                 // 待分级图片标题、添加按钮和清空按钮
                 Row(
@@ -143,41 +148,133 @@ fun PendingImagesSection(
                 }
 
                 // 图片待选区 - 待放置图片列表
-                LazyRow(
-                    modifier = Modifier.height(pendingSectionHeight)
-                ) {
-                    itemsIndexed(images, key = { index, uri -> "${index}_${uri}_${uri.hashCode()}" }) { index, uri ->
-                        DraggablePendingImageItem(
-                            uri = uri,
-                            isDragging = isDragging && draggedIndex == index,
-                            tiers = tiers,
-                            tierRowPositions = tierRowPositions,
-                            onDragStart = { uriItem, initialCenter ->
-                                isDragging = true
-                                draggedIndex = index
-                                draggedUri = uriItem
-                                dragPosition = initialCenter
-                                onDragStart(uriItem)
-                            },
-                            onDrag = { currentCenter, dropTarget ->
-                                dragPosition = currentCenter
-                                currentDropTarget = dropTarget
-                            },
-                            onDragEnd = { finalDropTarget ->
-                                // 如果有目标层级，添加到该层级
-                                finalDropTarget?.let { tierLabel ->
-                                    draggedUri?.let { uri ->
-                                        onDropOnTier(uri, tierLabel)
+                if (isExpanded) {
+                    // 双列布局：两行水平滚动，同步滚动位置
+                    val mid = (images.size + 1) / 2
+                    val row1Images = images.take(mid)
+                    val row2Images = images.drop(mid)
+                    val row1State = rememberLazyListState()
+                    val row2State = rememberLazyListState()
+
+                    // 同步两行滚动位置
+                    LaunchedEffect(row1State.firstVisibleItemIndex, row1State.firstVisibleItemScrollOffset) {
+                        row2State.scrollToItem(row1State.firstVisibleItemIndex, row1State.firstVisibleItemScrollOffset)
+                    }
+
+                    Column {
+                        LazyRow(
+                            state = row1State,
+                            modifier = Modifier.height(pendingSectionHeight)
+                        ) {
+                            itemsIndexed(row1Images, key = { index, uri -> "${index}_${uri}_${uri.hashCode()}" }) { index, uri ->
+                                val globalIndex = index
+                                DraggablePendingImageItem(
+                                    uri = uri,
+                                    isDragging = isDragging && draggedUri == uri,
+                                    tiers = tiers,
+                                    tierRowPositions = tierRowPositions,
+                                    onDragStart = { uriItem, initialCenter ->
+                                        isDragging = true
+                                        draggedIndex = globalIndex
+                                        draggedUri = uriItem
+                                        dragPosition = initialCenter
+                                        onDragStart(uriItem)
+                                    },
+                                    onDrag = { currentCenter, dropTarget ->
+                                        dragPosition = currentCenter
+                                        currentDropTarget = dropTarget
+                                    },
+                                    onDragEnd = { finalDropTarget ->
+                                        finalDropTarget?.let { tierLabel ->
+                                            draggedUri?.let { u ->
+                                                onDropOnTier(u, tierLabel)
+                                            }
+                                        }
+                                        isDragging = false
+                                        draggedIndex = null
+                                        draggedUri = null
+                                        dragPosition = Offset.Zero
+                                        currentDropTarget = null
+                                        onDragEnd()
                                     }
-                                }
-                                isDragging = false
-                                draggedIndex = null
-                                draggedUri = null
-                                dragPosition = Offset.Zero
-                                currentDropTarget = null
-                                onDragEnd()
+                                )
                             }
-                        )
+                        }
+                        LazyRow(
+                            state = row2State,
+                            modifier = Modifier.height(pendingSectionHeight)
+                        ) {
+                            itemsIndexed(row2Images, key = { index, uri -> "${index + mid}_${uri}_${uri.hashCode()}" }) { index, uri ->
+                                val globalIndex = index + mid
+                                DraggablePendingImageItem(
+                                    uri = uri,
+                                    isDragging = isDragging && draggedUri == uri,
+                                    tiers = tiers,
+                                    tierRowPositions = tierRowPositions,
+                                    onDragStart = { uriItem, initialCenter ->
+                                        isDragging = true
+                                        draggedIndex = globalIndex
+                                        draggedUri = uriItem
+                                        dragPosition = initialCenter
+                                        onDragStart(uriItem)
+                                    },
+                                    onDrag = { currentCenter, dropTarget ->
+                                        dragPosition = currentCenter
+                                        currentDropTarget = dropTarget
+                                    },
+                                    onDragEnd = { finalDropTarget ->
+                                        finalDropTarget?.let { tierLabel ->
+                                            draggedUri?.let { u ->
+                                                onDropOnTier(u, tierLabel)
+                                            }
+                                        }
+                                        isDragging = false
+                                        draggedIndex = null
+                                        draggedUri = null
+                                        dragPosition = Offset.Zero
+                                        currentDropTarget = null
+                                        onDragEnd()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    LazyRow(
+                        modifier = Modifier.height(pendingSectionHeight)
+                    ) {
+                        itemsIndexed(images, key = { index, uri -> "${index}_${uri}_${uri.hashCode()}" }) { index, uri ->
+                            DraggablePendingImageItem(
+                                uri = uri,
+                                isDragging = isDragging && draggedIndex == index,
+                                tiers = tiers,
+                                tierRowPositions = tierRowPositions,
+                                onDragStart = { uriItem, initialCenter ->
+                                    isDragging = true
+                                    draggedIndex = index
+                                    draggedUri = uriItem
+                                    dragPosition = initialCenter
+                                    onDragStart(uriItem)
+                                },
+                                onDrag = { currentCenter, dropTarget ->
+                                    dragPosition = currentCenter
+                                    currentDropTarget = dropTarget
+                                },
+                                onDragEnd = { finalDropTarget ->
+                                    finalDropTarget?.let { tierLabel ->
+                                        draggedUri?.let { uri ->
+                                            onDropOnTier(uri, tierLabel)
+                                        }
+                                    }
+                                    isDragging = false
+                                    draggedIndex = null
+                                    draggedUri = null
+                                    dragPosition = Offset.Zero
+                                    currentDropTarget = null
+                                    onDragEnd()
+                                }
+                            )
+                        }
                     }
                 }
             }

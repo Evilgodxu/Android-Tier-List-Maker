@@ -90,8 +90,7 @@ class MainActivity : ComponentActivity() {
         themeManager = ThemeManager(userPreferencesRepository)
 
         enableEdgeToEdge()
-        windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
-        updateSystemBarsVisibility()
+        setupSystemBars()
 
         // 将初始 intent 发送到流中，由 Composable 统一处理外部导入
         externalIntentFlow.value = intent
@@ -204,6 +203,12 @@ class MainActivity : ComponentActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         updateSystemBarsVisibility()
+        // 旋转后重新应用语言，防止 locale 被系统配置覆盖
+        if (::languageManager.isInitialized) {
+            val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+                .getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE
+            languageManager.applyAppLocale(resolveLocale(languageCode))
+        }
     }
 
     override fun onUserLeaveHint() {
@@ -219,8 +224,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun setupSystemBars() {
+        windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        windowInsetsController.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        updateSystemBarsVisibility()
+    }
+
     private fun updateSystemBarsVisibility() {
-        if (!::windowInsetsController.isInitialized) return
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
         } else {

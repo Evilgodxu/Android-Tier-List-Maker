@@ -55,7 +55,8 @@ fun DraggablePendingImageItem(
     tierRowPositions: Map<String, Rect>,
     onDragStart: (Uri, Offset) -> Unit,
     onDrag: (Offset, String?) -> Unit,
-    onDragEnd: (String?) -> Unit
+    onDragEnd: (String?) -> Unit,
+    verticalDragThreshold: Float = 20f
 ) {
     // 固定尺寸配置
     val imageSize = 85.dp
@@ -92,7 +93,6 @@ fun DraggablePendingImageItem(
             .pointerInput(Unit) {
                 // 使用底层 API 处理手势
                 // 往下拖动超过此阈值才触发拖放
-                val verticalDragThreshold = 20f
                 val horizontalDragThreshold = 30f // 水平滑动阈值，超过此值才认为是水平滑动
                 
                 awaitPointerEventScope {
