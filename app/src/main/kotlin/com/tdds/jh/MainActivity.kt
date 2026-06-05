@@ -93,7 +93,10 @@ class MainActivity : ComponentActivity() {
         themeManager = ThemeManager(userPreferencesRepository)
 
         // 将初始 intent 发送到流中，由 Composable 统一处理外部导入
-        externalIntentFlow.value = intent
+        // 仅首次启动（非旋转重建）时发射，避免旋转屏幕重复触发导入
+        if (savedInstanceState == null) {
+            externalIntentFlow.value = intent
+        }
 
         val scope = lifecycleScope
         val appRes = resources

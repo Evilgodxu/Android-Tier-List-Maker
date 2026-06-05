@@ -47,7 +47,6 @@ import com.tdds.jh.screens.tierlist.service.SettingsService
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -259,10 +258,11 @@ fun rememberTierListViewModel(
     vm.imagePickerHandler.setPendingImagesProvider { vm.pendingImages }
 
     // ==================== 外部文件打开副作用 ====================
-    // 通过 Flow 驱动，支持 onNewIntent 时重新触发（配合 singleTask launchMode）
+    // 通过 Flow 驱动，支持 onNewIntent 时重新触发
+    // 注意：旋转屏幕不会重复触发，因为 MainActivity.onCreate 在 savedInstanceState != null 时不再发射 Intent
     val activity = context as? ComponentActivity
     LaunchedEffect(externalIntentFlow) {
-        externalIntentFlow.distinctUntilChanged().collect { intent ->
+        externalIntentFlow.collect { intent ->
             if (intent == null) return@collect
             when {
                 intent.action == Intent.ACTION_VIEW -> handleViewIntent(vm, activity, intent)
