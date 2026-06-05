@@ -29,7 +29,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -154,11 +156,21 @@ fun TierListMakerApp(
     }
     if (vm.dialogState.showDraftLoadingDialog) LoadingDialog(message = stringResource(R.string.loading_resources))
 
+    // 竖屏时应用状态栏 insets，横屏时隐藏状态栏不需要 insets
+    val topBarInsets = if (!isExpanded) {
+        WindowInsets.statusBars
+    } else {
+        WindowInsets(0, 0, 0, 0)
+    }
+
     Scaffold(
         containerColor = extendedColors.background,
         topBar = {
             Box(
-                modifier = Modifier.fillMaxWidth().background(extendedColors.background)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(extendedColors.background)
+                    .windowInsetsPadding(topBarInsets)
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -413,13 +425,25 @@ fun TierListMakerApp(
 
         if (!isExpanded) {
             // Compact: 手机竖屏 — 待分级图片在顶部，层级列表在下方垂直排列
-            Column(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .background(extendedColors.background)
+                    .consumeWindowInsets(innerPadding)
+                    .padding(innerPadding)
+            ) {
                 pendingSection()
                 tierListSection(Modifier.fillMaxWidth().weight(1f))
             }
         } else {
             // Expanded: 平板/横屏 — 左右双栏布局
-            Row(Modifier.fillMaxSize().background(extendedColors.background).padding(innerPadding)) {
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .background(extendedColors.background)
+                    .consumeWindowInsets(innerPadding)
+                    .padding(innerPadding)
+            ) {
                 Column(
                     modifier = Modifier.weight(0.4f).fillMaxSize()
                         .padding(start = if (isExpanded) 0.dp else 4.dp, top = 4.dp)

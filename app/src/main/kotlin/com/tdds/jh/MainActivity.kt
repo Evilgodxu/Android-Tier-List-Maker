@@ -8,9 +8,16 @@ import android.os.Bundle
 import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +49,7 @@ class MainActivity : ComponentActivity() {
     }
     private lateinit var languageManager: LanguageManager
     private lateinit var themeManager: ThemeManager
+    private lateinit var windowInsetsController: WindowInsetsControllerCompat
 
     override fun attachBaseContext(newBase: Context) {
         val prefs = newBase.getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
@@ -72,6 +80,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setupSystemBars()
+
         val packageInfo = packageManager.getPackageInfo(packageName, 0)
         val versionName = packageInfo.versionName ?: ""
         @Suppress("UNUSED_VARIABLE")
@@ -120,57 +131,76 @@ class MainActivity : ComponentActivity() {
                         darkTheme = isDarkTheme,
                         disableCustomFont = disableCustomFont
                     ) {
-                        TierListMakerApp(
-                        externalIntentFlow = externalIntentFlow,
-                        isDarkTheme = isDarkTheme,
-                        followSystemTheme = followSystemTheme,
-                        disableCustomFont = disableCustomFont,
-                        currentLanguage = currentLanguage,
-                        onDisableCustomFontChange = { newValue ->
-                            scope.launch {
-                                userPreferencesRepository.setDisableCustomFont(newValue)
-                            }
-                        },
-                        onThemeChange = { newDarkTheme ->
-                            scope.launch {
-                                val newMode = if (newDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
-                                themeManager.setThemeMode(newMode)
-                            }
-                        },
-                        onFollowSystemThemeChange = { followSystem ->
-                            scope.launch {
-                                val newMode = if (followSystem) ThemeMode.SYSTEM
-                                else if (isDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
-                                themeManager.setThemeMode(newMode)
-                            }
-                        },
-                        onLanguageChange = { languageCode ->
-                            getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
-                                .edit().putString(KEY_LANGUAGE, languageCode).commit()
-                            languageManager.applyAppLocale(resolveLocale(languageCode))
-                            scope.launch {
-                                userPreferencesRepository.setLanguage(languageCode)
-                            }
-                        },
-                        onRegisterSaveDraftCallback = { callback ->
-                            saveDraftCallback = callback
-                        },
-                        onSaveDraftForResourceManager = {
-                            saveDraftCallback?.invoke()
-                        },
-                        onSkipDraftSave = {
-                            skipDraftSaveTemporarily()
-                        },
-                        onResumeDraftSave = {
-                            resumeDraftSave()
-                        },
-                        onExitApp = {
-                            exitAppWithCleanup()
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background,
+                        ) {
+                            TierListMakerApp(
+                                externalIntentFlow = externalIntentFlow,
+                                isDarkTheme = isDarkTheme,
+                                followSystemTheme = followSystemTheme,
+                                disableCustomFont = disableCustomFont,
+                                currentLanguage = currentLanguage,
+                                onDisableCustomFontChange = { newValue ->
+                                    scope.launch {
+                                        userPreferencesRepository.setDisableCustomFont(newValue)
+                                    }
+                                },
+                                onThemeChange = { newDarkTheme ->
+                                    scope.launch {
+                                        val newMode = if (newDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
+                                        themeManager.setThemeMode(newMode)
+                                    }
+                                },
+                                onFollowSystemThemeChange = { followSystem ->
+                                    scope.launch {
+                                        val newMode = if (followSystem) ThemeMode.SYSTEM
+                                        else if (isDarkTheme) ThemeMode.DARK else ThemeMode.LIGHT
+                                        themeManager.setThemeMode(newMode)
+                                    }
+                                },
+                                onLanguageChange = { languageCode ->
+                                    getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
+                                        .edit().putString(KEY_LANGUAGE, languageCode).commit()
+                                    languageManager.applyAppLocale(resolveLocale(languageCode))
+                                    scope.launch {
+                                        userPreferencesRepository.setLanguage(languageCode)
+                                    }
+                                },
+                                onRegisterSaveDraftCallback = { callback ->
+                                    saveDraftCallback = callback
+                                },
+                                onSaveDraftForResourceManager = {
+                                    saveDraftCallback?.invoke()
+                                },
+                                onSkipDraftSave = {
+                                    skipDraftSaveTemporarily()
+                                },
+                                onResumeDraftSave = {
+                                    resumeDraftSave()
+                                },
+                                onExitApp = {
+                                    exitAppWithCleanup()
+                                }
+                            )
                         }
-                    )
-                }
+                    }
                 }
             }
+        }
+    }
+
+    private fun setupSystemBars() {
+        windowInsetsController = WindowInsetsControllerCompat(window, window.decorView)
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        updateSystemBarsVisibility()
+    }
+
+    private fun updateSystemBarsVisibility() {
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+        } else {
+            windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
         }
     }
 
@@ -190,7 +220,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        // 旋转后重新应用语言，防止 locale 被系统配置覆盖
+        // 其他配置变化时重新应用语言（旋转时 Activity 会重建，不需要处理）
         if (::languageManager.isInitialized) {
             val languageCode = getSharedPreferences(SETTINGS_PREFS_NAME, Context.MODE_PRIVATE)
                 .getString(KEY_LANGUAGE, DEFAULT_LANGUAGE) ?: DEFAULT_LANGUAGE

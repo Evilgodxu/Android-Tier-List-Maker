@@ -75,10 +75,6 @@ android {
         localeFilters += listOf("zh", "en", "ja", "ko", "ru", "de", "fr", "es", "ar", "pt")
     }
 
-    lint {
-        baseline = file("lint-baseline.xml")
-    }
-
     packaging {
         resources {
             excludes += setOf(
