@@ -1,5 +1,7 @@
 # Tier-Master (梯度大师)
 
+[![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+
 一款专业的梯度表/排行榜编辑工具，基于 Jetpack Compose 与 Material3 构建，支持批量图片管理、自定义层级、主题切换等功能。
 
 ## 应用预览
@@ -101,7 +103,7 @@
 | 图片裁切 | easycrop 0.1.1 |
 | 拖拽排序 | reorderable 3.1.0 |
 | 代码规范 | ktlint 1.2.1 |
-| 许可证 | Apache-2.0 |
+| 许可证 | AGPL-3.0 |
 
 ## 运行环境
 
@@ -109,7 +111,7 @@
 |------|-----|
 | applicationId | com.tdds.jh |
 | versionName | 2.0.0 |
-| compileSdk | 36 |
+| compileSdk | 37 |
 | minSdk | 31 (Android 12) |
 | targetSdk | 37 |
 | NDK | arm64-v8a |
@@ -125,7 +127,7 @@ KEY_ALIAS=your_key_alias
 KEY_PASSWORD=your_key_password
 ```
 
-同时确保密钥库文件 `your_key.keystore` 位于项目根目录。如果密钥库文件名或路径不同，请修改 `app/build.gradle.kts` 中的 `storeFile` 配置。
+同时确保密钥库文件 `jh.keystore` 位于项目根目录。
 
 **注意**：`local.properties` 和密钥库文件已添加到 `.gitignore`，不会被提交到版本控制。
 
