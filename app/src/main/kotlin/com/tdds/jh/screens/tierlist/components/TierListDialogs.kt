@@ -1,5 +1,6 @@
 package com.tdds.jh.screens.tierlist.components
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
@@ -116,6 +117,7 @@ fun TierListDialogs(
     dialogState: DialogState,
     handlers: DialogHandlers,
     context: Context,
+    activity: Activity?,
     scope: CoroutineScope,
     settingsService: SettingsService,
     presetManager: PresetManager,
@@ -674,7 +676,12 @@ fun TierListDialogs(
             },
             onShare = {
                 handlers.onPreviewShare {
-                    shareBitmap(context, dialogState.previewBitmap!!, tierListTitle)
+                    val act = activity
+                    if (act != null) {
+                        shareBitmap(act, context, dialogState.previewBitmap!!, tierListTitle)
+                    } else {
+                        showToastWithoutIcon(context, context.getString(R.string.share_failed, "Activity not found"))
+                    }
                 }
             },
             onThemeToggle = {

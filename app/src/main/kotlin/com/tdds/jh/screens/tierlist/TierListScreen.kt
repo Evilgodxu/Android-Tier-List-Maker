@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.BackHandler
+import androidx.activity.ComponentActivity
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.model.tierlist.TierImage
@@ -102,6 +103,7 @@ private enum class GestureType { LongPress, VerticalDrag, HorizontalSwipe }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun TierListMakerApp(
+    activity: ComponentActivity? = null,
     externalIntentFlow: kotlinx.coroutines.flow.Flow<android.content.Intent?> = kotlinx.coroutines.flow.emptyFlow(),
     isDarkTheme: Boolean = false,
     followSystemTheme: Boolean = true,
@@ -459,7 +461,7 @@ fun TierListMakerApp(
         if (vm.draggingTierImage != null) FloatingDragImage(vm.draggingTierImage!!.uri, vm.draggingTierImagePosition, vm.draggingTierImageTarget, vm.floatOffsetX, vm.floatOffsetY)
 
         TierListDialogs(
-            dialogState = vm.dialogState, handlers = vm.dialogHandlers, context = context, scope = scope,
+            dialogState = vm.dialogState, handlers = vm.dialogHandlers, context = context, activity = activity, scope = scope,
             settingsService = vm.settingsService, presetManager = vm.presetManager,
             tierImages = vm.tierImages, tiers = vm.tiers,
             tierListTitle = vm.tierListTitle, authorName = vm.authorName,

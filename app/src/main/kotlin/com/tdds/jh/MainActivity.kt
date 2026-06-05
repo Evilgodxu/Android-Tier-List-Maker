@@ -136,6 +136,7 @@ class MainActivity : ComponentActivity() {
                             color = MaterialTheme.colorScheme.background,
                         ) {
                             TierListMakerApp(
+                                activity = this@MainActivity,
                                 externalIntentFlow = externalIntentFlow,
                                 isDarkTheme = isDarkTheme,
                                 followSystemTheme = followSystemTheme,

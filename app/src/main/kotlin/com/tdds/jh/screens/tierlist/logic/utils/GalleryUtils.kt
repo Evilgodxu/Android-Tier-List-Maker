@@ -1,5 +1,6 @@
 package com.tdds.jh.screens.tierlist.logic.utils
 
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
@@ -68,11 +69,13 @@ suspend fun saveBitmapToGallery(
 /**
  * 分享Bitmap图片
  *
- * @param context 上下文
+ * @param activity 用于启动分享对话框的Activity
+ * @param context 上下文（用于获取资源）
  * @param bitmap 要分享的位图
  * @param title 图片标题（用于生成文件名）
  */
 suspend fun shareBitmap(
+    activity: Activity,
     context: Context,
     bitmap: Bitmap,
     title: String = ""
@@ -119,13 +122,11 @@ suspend fun shareBitmap(
             }
 
             // 启动分享对话框 - 权限需要设置在chooser上
-            // 添加FLAG_ACTIVITY_NEW_TASK标志以兼容非Activity Context启动
             val chooser = Intent.createChooser(shareIntent, context.getString(R.string.share_image)).apply {
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             withContext(Dispatchers.Main) {
-                context.startActivity(chooser)
+                activity.startActivity(chooser)
             }
         }
     } catch (e: Exception) {
