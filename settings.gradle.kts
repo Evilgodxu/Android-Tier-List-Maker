@@ -1,9 +1,14 @@
 pluginManagement {
     repositories {
-        // Kotlin 插件优先从官方源获取
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
         gradlePluginPortal()
         mavenCentral()
-        google()
         // 阿里云镜像作为 fallback
         maven { url = uri("https://maven.aliyun.com/repository/public") }
         maven { url = uri("https://maven.aliyun.com/repository/google") }

@@ -18,10 +18,10 @@ android {
 
     defaultConfig {
         applicationId = "com.tdds.jh"
-        minSdk = 31
+        minSdk = 32
         targetSdk = 37
         versionCode = 1
-        versionName = "2.0.0"
+        versionName = "2.0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
