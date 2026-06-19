@@ -1,5 +1,8 @@
 package com.tdds.jh.screens.tierlist.components.video
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +48,6 @@ import androidx.compose.ui.window.Dialog
 import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
-import com.tdds.jh.model.tierlist.video.AudioOverlayMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
@@ -58,7 +60,6 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
 fun VideoGenerationConfigDialog(
     initialConfig: VideoGenerationConfig,
     onDismiss: () -> Unit,
-    onConfirm: (VideoGenerationConfig) -> Unit,
     onConfigChange: (VideoGenerationConfig) -> Unit,
     onPreview: (() -> Unit)? = null,
     onExport: (() -> Unit)? = null
@@ -153,10 +154,6 @@ fun VideoGenerationConfigDialog(
                         TextButton(onClick = { onExport.invoke() }) {
                             Text(stringResource(R.string.export_video))
                         }
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Button(onClick = { onConfirm(config) }) {
-                        Text(stringResource(R.string.confirm))
                     }
                 }
             }
@@ -319,44 +316,71 @@ private fun AudioSection(
     config: VideoGenerationConfig,
     onConfigChange: (VideoGenerationConfig) -> Unit
 ) {
-    SectionTitle(stringResource(R.string.audio_settings))
-
-    Text(stringResource(R.string.audio_overlay), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-    AudioOverlayMode.entries.forEach { mode ->
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onConfigChange(config.copy(audioOverlayMode = mode)) }
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            RadioButton(selected = config.audioOverlayMode == mode, onClick = { onConfigChange(config.copy(audioOverlayMode = mode)) })
-            Text(stringResource(mode.labelRes), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val musicPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+            }
+            onConfigChange(config.copy(backgroundMusicUri = it.toString()))
         }
     }
+
+    SectionTitle(stringResource(R.string.audio_settings))
+
+    BackgroundMusicRow(
+        uriString = config.backgroundMusicUri,
+        onAdd = { musicPicker.launch("audio/*") },
+        onRemove = { onConfigChange(config.copy(backgroundMusicUri = null)) }
+    )
 
     FloatSlider(
         label = stringResource(R.string.narration_volume),
         value = config.narrationVolume,
         range = 0f..1.5f,
+        valueFormatter = { String.format("%.0f%%", it * 100) },
         onValueChange = { onConfigChange(config.copy(narrationVolume = it)) }
     )
-
-    if (config.audioOverlayMode != AudioOverlayMode.REPLACE) {
-        FloatSlider(
-            label = stringResource(R.string.sfx_volume),
-            value = config.sfxVolume,
-            range = 0f..1.5f,
-            onValueChange = { onConfigChange(config.copy(sfxVolume = it)) }
-        )
-    }
 
     FloatSlider(
         label = stringResource(R.string.bgm_volume),
         value = config.backgroundMusicVolume,
         range = 0f..1.5f,
+        valueFormatter = { String.format("%.0f%%", it * 100) },
         onValueChange = { onConfigChange(config.copy(backgroundMusicVolume = it)) }
     )
+}
+
+@Composable
+private fun BackgroundMusicRow(
+    uriString: String?,
+    onAdd: () -> Unit,
+    onRemove: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (uriString.isNullOrBlank()) {
+            Text(stringResource(R.string.background_music), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+            TextButton(onClick = onAdd) {
+                Text(stringResource(R.string.add_background_music))
+            }
+        } else {
+            val name = runCatching { Uri.parse(uriString).lastPathSegment?.substringAfterLast('/') }.getOrNull() ?: uriString
+            Text(name, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+            TextButton(onClick = onRemove) {
+                Text(stringResource(R.string.remove))
+            }
+        }
+    }
 }
 
 @Composable
@@ -364,6 +388,7 @@ private fun FloatSlider(
     label: String,
     value: Float,
     range: ClosedFloatingPointRange<Float>,
+    valueFormatter: (Float) -> String = { String.format("%.1f s", it) },
     onValueChange: (Float) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
@@ -373,7 +398,7 @@ private fun FloatSlider(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(label, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-            Text(String.format("%.1f s", value), fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
+            Text(valueFormatter(value), fontSize = 13.sp, color = MaterialTheme.colorScheme.primary)
         }
         Slider(
             value = value,

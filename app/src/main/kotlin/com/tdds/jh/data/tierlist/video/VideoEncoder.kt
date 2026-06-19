@@ -61,8 +61,11 @@ class VideoEncoder(
             return@withContext false
         }
 
+        val colorFormat = selectColorFormat(codec)
+        val isPlanar = colorFormat == MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar
+
         val format = MediaFormat.createVideoFormat("video/avc", width, height).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible)
+            setInteger(MediaFormat.KEY_COLOR_FORMAT, colorFormat)
             setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
             setInteger(MediaFormat.KEY_FRAME_RATE, frameRate)
             setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, iFrameInterval)
@@ -124,7 +127,11 @@ class VideoEncoder(
                                 } else {
                                     bitmap
                                 }
-                                val yuv = BitmapToYuvConverter.argbToYuv420p(scaledBitmap)
+                                val yuv = if (isPlanar) {
+                                    BitmapToYuvConverter.argbToYuv420p(scaledBitmap)
+                                } else {
+                                    BitmapToYuvConverter.argbToNv12(scaledBitmap)
+                                }
                                 if (scaledBitmap != bitmap) scaledBitmap.recycle()
                                 inputBuffer.put(yuv)
 
@@ -213,6 +220,23 @@ class VideoEncoder(
 
         progressCallback(1f)
         return@withContext true
+    }
+
+    private fun selectColorFormat(codec: MediaCodec): Int {
+        val capabilities = try {
+            codec.codecInfo.getCapabilitiesForType("video/avc")
+        } catch (_: Exception) {
+            return MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
+        }
+        val preferred = listOf(
+            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar,
+            MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar
+        )
+        for (format in preferred) {
+            if (format in capabilities.colorFormats) return format
+        }
+        return capabilities.colorFormats.firstOrNull()
+            ?: MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420SemiPlanar
     }
 
     private fun findKeyFrameIndex(frames: List<VideoFrame>, currentTime: Float): Int {

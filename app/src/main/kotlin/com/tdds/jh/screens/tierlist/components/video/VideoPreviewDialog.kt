@@ -26,7 +26,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -263,12 +262,6 @@ fun VideoPreviewDialog(
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
-                Row {
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.close))
-                    }
-                }
             }
         }
     }

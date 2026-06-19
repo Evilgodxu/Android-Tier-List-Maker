@@ -194,7 +194,6 @@ fun TierListMakerApp(
         VideoGenerationConfigDialog(
             initialConfig = vm.videoGenerationConfig,
             onDismiss = { vm.dialogState.showVideoGenerationConfigDialog = false },
-            onConfirm = { vm.dialogState.showVideoGenerationConfigDialog = false },
             onConfigChange = { vm.videoGenerationConfig = it },
             onPreview = {
                 vm.dialogState.showVideoGenerationConfigDialog = false

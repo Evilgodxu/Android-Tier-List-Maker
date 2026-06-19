@@ -105,7 +105,7 @@ data class VideoGenerationConfig(
     override fun describeContents(): Int = 0
 
     companion object {
-        val DEFAULT_ACTION_ORDER = listOf(VideoActionType.PLACE, VideoActionType.NAME, VideoActionType.BADGE)
+        val DEFAULT_ACTION_ORDER = listOf(VideoActionType.PLACE, VideoActionType.BADGE, VideoActionType.NAME)
 
         @JvmField
         val CREATOR: Parcelable.Creator<VideoGenerationConfig> = object : Parcelable.Creator<VideoGenerationConfig> {

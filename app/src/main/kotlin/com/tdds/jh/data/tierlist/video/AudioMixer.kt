@@ -3,15 +3,12 @@ package com.tdds.jh.data.tierlist.video
 import android.content.Context
 import android.net.Uri
 import androidx.core.net.toUri
-import com.tdds.jh.model.tierlist.video.AudioOverlayMode
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.model.tierlist.video.timeline.Timeline
 import com.tdds.jh.model.tierlist.video.timeline.TimelineAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import kotlin.math.sin
-
 /**
  * 音频合成引擎
  *
@@ -49,7 +46,7 @@ class AudioMixer(private val context: Context) {
 
         mixNarration(timeline, config, mixBuffer, sampleRate, channels, progressCallback)
         mixBackgroundMusic(config, mixBuffer, sampleRate, channels, progressCallback)
-        mixSoundEffects(timeline, config, mixBuffer, sampleRate, channels, progressCallback)
+        progressCallback(0.9f)
 
         val finalPcm = ShortArray(mixBuffer.size) { i ->
             mixBuffer[i].coerceIn(Short.MIN_VALUE.toInt(), Short.MAX_VALUE.toInt()).toShort()
@@ -102,35 +99,6 @@ class AudioMixer(private val context: Context) {
         progressCallback(0.6f)
     }
 
-    private suspend fun mixSoundEffects(
-        timeline: Timeline,
-        config: VideoGenerationConfig,
-        mixBuffer: IntArray,
-        sampleRate: Int,
-        channels: Int,
-        progressCallback: (Float) -> Unit
-    ) {
-        if (config.audioOverlayMode == AudioOverlayMode.REPLACE || config.sfxVolume <= 0f) {
-            progressCallback(0.9f)
-            return
-        }
-
-        val placeSfx = generateBeepPcm(0.15f, 800.0, sampleRate, channels)
-        val nameSfx = generateBeepPcm(0.1f, 1200.0, sampleRate, channels)
-        val badgeSfx = generateBeepPcm(0.1f, 1600.0, sampleRate, channels)
-
-        timeline.actions.forEach { action ->
-            val sfx = when (action) {
-                is TimelineAction.Place -> placeSfx
-                is TimelineAction.Name -> nameSfx
-                is TimelineAction.Badge -> badgeSfx
-            }
-            val startSample = (action.startTime * sampleRate * channels).toInt()
-            mixPcm(mixBuffer, sfx, startSample, config.sfxVolume)
-        }
-        progressCallback(0.9f)
-    }
-
     private fun mixPcm(mixBuffer: IntArray, pcm: ShortArray, startSample: Int, volume: Float) {
         if (volume <= 0f) return
         for (i in pcm.indices) {
@@ -145,21 +113,6 @@ class AudioMixer(private val context: Context) {
         for (targetIndex in mixBuffer.indices) {
             val sourceIndex = (targetIndex - startSample).mod(pcm.size)
             mixBuffer[targetIndex] += (pcm[sourceIndex] * volume).toInt()
-        }
-    }
-
-    private fun generateBeepPcm(
-        durationSeconds: Float,
-        frequency: Double,
-        sampleRate: Int,
-        channels: Int
-    ): ShortArray {
-        val numSamples = (durationSeconds * sampleRate).toInt()
-        return ShortArray(numSamples * channels) { i ->
-            val sampleIndex = i / channels
-            val t = sampleIndex / sampleRate.toDouble()
-            val value = sin(2 * Math.PI * frequency * t) * 32767 * 0.3
-            value.toInt().toShort()
         }
     }
 
