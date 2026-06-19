@@ -41,6 +41,7 @@ import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.TierListConfig
+import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.data.tierlist.generateTierListBitmap
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.ImportTarget
@@ -142,6 +143,8 @@ fun TierListDialogs(
     onTierImagesChange: () -> Unit,
     onPendingImagesChange: (List<Uri>) -> Unit,
     onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit,
+    videoConfig: VideoGenerationConfig,
+    onVideoConfigChange: (VideoGenerationConfig) -> Unit,
     onDisableClickAddChange: (Boolean) -> Unit,
     onFloatOffsetXChange: (Float) -> Unit,
     onFloatOffsetYChange: (Float) -> Unit,
@@ -522,7 +525,8 @@ fun TierListDialogs(
                         onPendingImagesChange = onPendingImagesChange,
                         onTitleChange = onTitleChange,
                         onAuthorChange = onAuthorChange,
-                        onTierRowPositionsChange = onTierRowPositionsChange
+                        onTierRowPositionsChange = onTierRowPositionsChange,
+                        onVideoConfigChange = onVideoConfigChange
                     )
                 } else {
                     handlers.onPresetNameConfirm(name) {
@@ -546,6 +550,7 @@ fun TierListDialogs(
             tiers = tiers,
             pendingImages = pendingImages,
             authorName = authorName,
+            videoConfig = videoConfig,
             extendedColors = extendedColors
         )
     }
@@ -571,13 +576,14 @@ fun TierListDialogs(
                     tiers = tiers,
                     onTierImagesChange = onTierImagesChange,
                     onTiersChange = onTiersChange,
-                    onPendingImagesChange = onPendingImagesChange,
-                    onTitleChange = onTitleChange,
-                    onAuthorChange = onAuthorChange,
-                    onTierRowPositionsChange = onTierRowPositionsChange
-                )
-            },
-            onCreateNew = handlers::onImportCreateNewPreset
+                        onPendingImagesChange = onPendingImagesChange,
+                        onTitleChange = onTitleChange,
+                        onAuthorChange = onAuthorChange,
+                        onTierRowPositionsChange = onTierRowPositionsChange,
+                        onVideoConfigChange = onVideoConfigChange
+                    )
+                },
+                onCreateNew = handlers::onImportCreateNewPreset
         )
     }
 
@@ -598,7 +604,8 @@ fun TierListDialogs(
                     onTitleChange = onTitleChange,
                     onAuthorChange = onAuthorChange,
                     onTierRowPositionsChange = onTierRowPositionsChange,
-                    settingsService = settingsService
+                    settingsService = settingsService,
+                    onVideoConfigChange = onVideoConfigChange
                 )
             }
         )
@@ -924,7 +931,8 @@ private fun handleImportOverwrite(
     onPendingImagesChange: (List<Uri>) -> Unit,
     onTitleChange: (String) -> Unit,
     onAuthorChange: (String) -> Unit,
-    onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit
+    onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit,
+    onVideoConfigChange: (VideoGenerationConfig) -> Unit
 ) {
     val importResult = dialogState.pendingImportResult
     dialogState.showImportOverwriteDialog = false
@@ -979,6 +987,7 @@ private fun handleImportOverwrite(
                 settingsService.customCropHeight = applyResult.customCropHeight
                 settingsService.useCustomCropSize = applyResult.useCustomCropSize
                 settingsService.cropRatio = applyResult.cropRatio
+                onVideoConfigChange(applyResult.videoConfig)
 
                 onTierRowPositionsChange(emptyMap())
 
@@ -998,7 +1007,8 @@ private fun handleImportOverwrite(
                             customCropWidth = settingsService.customCropWidth,
                             customCropHeight = settingsService.customCropHeight,
                             useCustomCropSize = settingsService.useCustomCropSize,
-                            cropRatio = settingsService.cropRatio
+                            cropRatio = settingsService.cropRatio,
+                            videoConfig = applyResult.videoConfig
                         )
                         presetManager.exportPreset(
                             presetName = result.presetData.title,
@@ -1038,7 +1048,8 @@ private fun handleImportWithNewName(
     onPendingImagesChange: (List<Uri>) -> Unit,
     onTitleChange: (String) -> Unit,
     onAuthorChange: (String) -> Unit,
-    onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit
+    onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit,
+    onVideoConfigChange: (VideoGenerationConfig) -> Unit
 ) {
     val importResult = dialogState.pendingImportResult
     dialogState.showPresetNameDialog = false
@@ -1098,6 +1109,7 @@ private fun handleImportWithNewName(
                 settingsService.customCropHeight = applyResult.customCropHeight
                 settingsService.useCustomCropSize = applyResult.useCustomCropSize
                 settingsService.cropRatio = applyResult.cropRatio
+                onVideoConfigChange(applyResult.videoConfig)
 
                 onTierRowPositionsChange(emptyMap())
 
@@ -1130,7 +1142,8 @@ private fun handleApplyPreset(
     onTitleChange: (String) -> Unit,
     onAuthorChange: (String) -> Unit,
     onTierRowPositionsChange: (Map<String, android.graphics.Rect>) -> Unit,
-    settingsService: SettingsService
+    settingsService: SettingsService,
+    onVideoConfigChange: (VideoGenerationConfig) -> Unit
 ) {
     val applyResult = presetManager.applyPreset(presetInfo.file)
 
@@ -1177,6 +1190,7 @@ private fun handleApplyPreset(
     settingsService.customCropHeight = applyResult.customCropHeight
     settingsService.useCustomCropSize = applyResult.useCustomCropSize
     settingsService.cropRatio = applyResult.cropRatio
+    onVideoConfigChange(applyResult.videoConfig)
 }
 
 @Composable
@@ -1191,6 +1205,7 @@ private fun PresetOverwriteConfirmDialog(
     tiers: MutableList<TierItem>,
     pendingImages: List<Uri>,
     authorName: String,
+    videoConfig: VideoGenerationConfig,
     extendedColors: com.tdds.jh.ui.theme.ExtendedColors
 ) {
     val isNameExists = presetManager.isPresetNameExists(dialogState.pendingPresetName)
@@ -1252,7 +1267,8 @@ private fun PresetOverwriteConfirmDialog(
                                                 customCropWidth = settingsService.customCropWidth,
                                                 customCropHeight = settingsService.customCropHeight,
                                                 useCustomCropSize = settingsService.useCustomCropSize,
-                                                cropRatio = settingsService.cropRatio
+                                                cropRatio = settingsService.cropRatio,
+                                                videoConfig = videoConfig
                                             )
                                         }
                                         withContext(kotlinx.coroutines.Dispatchers.IO) {
@@ -1307,7 +1323,8 @@ private fun PresetOverwriteConfirmDialog(
                     customCropWidth = settingsService.customCropWidth,
                     customCropHeight = settingsService.customCropHeight,
                     useCustomCropSize = settingsService.useCustomCropSize,
-                    cropRatio = settingsService.cropRatio
+                    cropRatio = settingsService.cropRatio,
+                    videoConfig = videoConfig
                 )
                 presetManager.savePreset(dialogState.pendingPresetName, presetData)
 

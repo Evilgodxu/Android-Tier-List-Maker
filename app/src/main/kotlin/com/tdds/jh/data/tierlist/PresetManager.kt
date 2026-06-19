@@ -13,6 +13,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.model.tierlist.video.ArrangementGranularity
+import com.tdds.jh.model.tierlist.video.AudioIntervalSource
+import com.tdds.jh.model.tierlist.video.AudioOverlayMode
+import com.tdds.jh.model.tierlist.video.GranularityMode
+import com.tdds.jh.model.tierlist.video.NameDisplayMode
+import com.tdds.jh.model.tierlist.video.VideoActionType
+import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.screens.tierlist.logic.utils.WebPConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,7 +49,8 @@ data class PresetData(
     val customCropWidth: Int = 0,
     val customCropHeight: Int = 0,
     val useCustomCropSize: Boolean = false,
-    val cropRatio: Float = 1f // 裁剪比例: 1f = 1:1, 0.75f = 3:4, 1.33f = 4:3
+    val cropRatio: Float = 1f, // 裁剪比例: 1f = 1:1, 0.75f = 3:4, 1.33f = 4:3
+    val videoConfig: VideoGenerationConfig = VideoGenerationConfig()
 )
 
 /**
@@ -1046,6 +1054,9 @@ class PresetManager(private val context: Context) {
             put("pendingImages", JSONArray().apply {
                 presetData.pendingImages.forEach { put(it) }
             })
+
+            // 视频生成配置
+            put("videoConfig", videoConfigToJson(presetData.videoConfig))
         }
     }
 
@@ -1109,8 +1120,81 @@ class PresetManager(private val context: Context) {
             customCropWidth = json.optInt("customCropWidth", 0),
             customCropHeight = json.optInt("customCropHeight", 0),
             useCustomCropSize = json.optBoolean("useCustomCropSize", false),
-            cropRatio = json.optDouble("cropRatio", 1.0).toFloat()
+            cropRatio = json.optDouble("cropRatio", 1.0).toFloat(),
+            videoConfig = json.optJSONObject("videoConfig")?.let { videoConfigFromJson(it) } ?: VideoGenerationConfig()
         )
+    }
+
+    /**
+     * 将视频生成配置转换为JSON
+     */
+    private fun videoConfigToJson(config: VideoGenerationConfig): JSONObject {
+        return JSONObject().apply {
+            put("actionOrder", JSONArray(config.actionOrder.map { it.name }))
+            put("granularity", config.granularity.name)
+            put("mixedGranularity", JSONObject().apply {
+                config.mixedGranularity.forEach { (type, mode) ->
+                    put(type.name, mode.name)
+                }
+            })
+            put("imageIntervalSource", config.imageIntervalSource.name)
+            put("fixedImageInterval", config.fixedImageInterval.toDouble())
+            put("badgeInterval", config.badgeInterval.toDouble())
+            put("nameDisplayMode", config.nameDisplayMode.name)
+            put("nameCharInterval", config.nameCharInterval.toDouble())
+            put("crossTypePause", config.crossTypePause.toDouble())
+            put("crossImagePause", config.crossImagePause.toDouble())
+            put("extraAudioOffset", config.extraAudioOffset.toDouble())
+            put("audioOverlayMode", config.audioOverlayMode.name)
+            put("backgroundMusicUri", config.backgroundMusicUri ?: JSONObject.NULL)
+            put("backgroundMusicVolume", config.backgroundMusicVolume.toDouble())
+            put("narrationVolume", config.narrationVolume.toDouble())
+            put("sfxVolume", config.sfxVolume.toDouble())
+            put("outputWidth", config.outputWidth)
+            put("outputHeight", config.outputHeight)
+        }
+    }
+
+    /**
+     * 从JSON解析视频生成配置
+     */
+    private fun videoConfigFromJson(json: JSONObject): VideoGenerationConfig? {
+        return try {
+            VideoGenerationConfig(
+                actionOrder = json.getJSONArray("actionOrder").let { array ->
+                    List(array.length()) { index ->
+                        VideoActionType.valueOf(array.getString(index))
+                    }
+                },
+                granularity = ArrangementGranularity.valueOf(json.getString("granularity")),
+                mixedGranularity = json.getJSONObject("mixedGranularity").let { obj ->
+                    VideoActionType.entries.associateWith { type ->
+                        try {
+                            GranularityMode.valueOf(obj.getString(type.name))
+                        } catch (_: Exception) {
+                            GranularityMode.PER_IMAGE
+                        }
+                    }
+                },
+                imageIntervalSource = AudioIntervalSource.valueOf(json.getString("imageIntervalSource")),
+                fixedImageInterval = json.getDouble("fixedImageInterval").toFloat(),
+                badgeInterval = json.getDouble("badgeInterval").toFloat(),
+                nameDisplayMode = NameDisplayMode.valueOf(json.getString("nameDisplayMode")),
+                nameCharInterval = json.getDouble("nameCharInterval").toFloat(),
+                crossTypePause = json.getDouble("crossTypePause").toFloat(),
+                crossImagePause = json.getDouble("crossImagePause").toFloat(),
+                extraAudioOffset = json.getDouble("extraAudioOffset").toFloat(),
+                audioOverlayMode = AudioOverlayMode.valueOf(json.getString("audioOverlayMode")),
+                backgroundMusicUri = json.optString("backgroundMusicUri").takeIf { it != "null" },
+                backgroundMusicVolume = json.getDouble("backgroundMusicVolume").toFloat(),
+                narrationVolume = json.getDouble("narrationVolume").toFloat(),
+                sfxVolume = json.getDouble("sfxVolume").toFloat(),
+                outputWidth = json.getInt("outputWidth"),
+                outputHeight = json.getInt("outputHeight")
+            )
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**
@@ -1786,6 +1870,7 @@ class PresetManager(private val context: Context) {
         val customCropHeight: Int,
         val useCustomCropSize: Boolean,
         val cropRatio: Float = 1f, // 裁剪比例
+        val videoConfig: VideoGenerationConfig = VideoGenerationConfig(),
         val stats: ApplyStats
     )
 
@@ -1983,6 +2068,7 @@ class PresetManager(private val context: Context) {
             customCropHeight = presetData.customCropHeight,
             useCustomCropSize = presetData.useCustomCropSize,
             cropRatio = presetData.cropRatio,
+            videoConfig = presetData.videoConfig,
             stats = ApplyStats(
                 copiedTierImages = validTierImages,
                 skippedTierImages = missingTierImages,
@@ -2032,7 +2118,8 @@ class PresetManager(private val context: Context) {
         customCropWidth: Int,
         customCropHeight: Int,
         useCustomCropSize: Boolean,
-        cropRatio: Float = 1f
+        cropRatio: Float = 1f,
+        videoConfig: VideoGenerationConfig = VideoGenerationConfig()
     ): PresetData {
         val tierImagesData = mutableListOf<TierImageData>()
         val pendingImagesNames = mutableListOf<String>()
@@ -2093,7 +2180,8 @@ class PresetManager(private val context: Context) {
             customCropWidth = customCropWidth,
             customCropHeight = customCropHeight,
             useCustomCropSize = useCustomCropSize,
-            cropRatio = cropRatio
+            cropRatio = cropRatio,
+            videoConfig = videoConfig
         )
     }
 

@@ -359,6 +359,7 @@ fun rememberTierListViewModel(
         onPendingImagesChange = { vm.pendingImages = it },
         onTitleChange = { vm.tierListTitle = it }, onAuthorChange = { vm.authorName = it },
         onTierRowPositionsReset = { vm.tierRowPositions = emptyMap() },
+        onVideoConfigChange = { vm.videoGenerationConfig = it },
         onResumeDraftSave = onResumeDraftSave, onSkipDraftSave = onSkipDraftSave,
         showToast = { message, duration -> showToastWithoutIcon(context, message, duration) }
     )
@@ -405,7 +406,7 @@ fun rememberTierListViewModel(
     DisposableEffect(Unit) {
         val saveDraft: () -> Unit = {
             if (hasContent(context.getString(R.string.default_title)))
-                scope.launch { vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages) }
+                scope.launch { vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages, vm.videoGenerationConfig) }
             else presetManager.cleanupDraft()
         }
         onRegisterSaveDraftCallback?.invoke(saveDraft)
@@ -420,7 +421,7 @@ fun rememberTierListViewModel(
         vm.presetOperationHandler.handleImportPreset(uri, vm.pendingImages)
     }
     vm.presetExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
-        vm.presetOperationHandler.handleExportPreset(uri, vm.dialogState.pendingPresetName, vm.tierListTitle, vm.authorName, vm.pendingImages)
+        vm.presetOperationHandler.handleExportPreset(uri, vm.dialogState.pendingPresetName, vm.tierListTitle, vm.authorName, vm.pendingImages, vm.videoGenerationConfig)
     }
     vm.packageExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         vm.packageOperationHandler.handleExportPackage(uri, vm.dialogState.packageToExport)

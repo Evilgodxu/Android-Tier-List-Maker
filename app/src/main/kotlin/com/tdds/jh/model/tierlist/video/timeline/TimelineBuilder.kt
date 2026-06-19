@@ -8,6 +8,7 @@ import com.tdds.jh.model.tierlist.video.GranularityMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
+import kotlin.math.max
 
 /**
  * 时间线构建引擎
@@ -46,10 +47,8 @@ class TimelineBuilder(
         initialTime: Float
     ): Float {
         var currentTime = initialTime
-        tierImages.forEachIndexed { imageIndex, image ->
-            if (imageIndex > 0) {
-                currentTime += imageIntervalFor(image)
-            }
+        tierImages.forEachIndexed { _, image ->
+            val imageStartTime = currentTime
             config.actionOrder.forEachIndexed { typeIndex, actionType ->
                 if (typeIndex > 0) {
                     currentTime += config.crossTypePause
@@ -58,6 +57,8 @@ class TimelineBuilder(
                 actions.addAll(imageActions)
                 currentTime += imageActions.totalDuration()
             }
+            // 当前图片至少展示到解说音频完整播放完毕，才能切换到下一张
+            currentTime = max(currentTime, imageStartTime + imageIntervalFor(image))
         }
         return currentTime
     }

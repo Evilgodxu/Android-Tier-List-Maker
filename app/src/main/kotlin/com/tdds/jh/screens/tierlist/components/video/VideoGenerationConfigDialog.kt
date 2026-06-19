@@ -64,18 +64,7 @@ fun VideoGenerationConfigDialog(
     onExport: (() -> Unit)? = null
 ) {
     var config by remember { mutableStateOf(initialConfig) }
-    var showPresetPicker by remember { mutableStateOf(false) }
     val extendedColors = LocalExtendedColors.current
-
-    if (showPresetPicker) {
-        VideoPresetPickerDialog(
-            currentConfig = config,
-            onDismiss = { showPresetPicker = false },
-            onLoadPreset = { loaded ->
-                config = loaded
-            }
-        )
-    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -153,10 +142,6 @@ fun VideoGenerationConfigDialog(
                         .padding(top = 16.dp, start = 20.dp, end = 20.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = { showPresetPicker = true }) {
-                        Text(stringResource(R.string.video_preset_manager))
-                    }
-                    Spacer(Modifier.width(8.dp))
                     if (onPreview != null) {
                         TextButton(onClick = { onPreview.invoke() }) {
                             Text(stringResource(R.string.preview_video))

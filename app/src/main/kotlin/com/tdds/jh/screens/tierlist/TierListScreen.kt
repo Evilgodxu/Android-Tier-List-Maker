@@ -239,7 +239,7 @@ fun TierListMakerApp(
     if (vm.dialogState.showImageAudioDialog && vm.dialogState.selectedImageForAudio != null) {
         val image = vm.dialogState.selectedImageForAudio!!
         ImageAudioDialog(
-            hasAudio = image.audioUri != null,
+            hasAudio = vm.tierImages.find { it.id == image.id }?.audioUri != null,
             onDismiss = { vm.dialogState.showImageAudioDialog = false; vm.dialogState.selectedImageForAudio = null },
             onUpload = {
                 vm.dialogState.selectedImageForAudio = image
@@ -560,6 +560,7 @@ fun TierListMakerApp(
             onTitleChange = { vm.tierListTitle = it }, onAuthorChange = { vm.authorName = it },
             onTiersChange = {}, onTierImagesChange = {},
             onPendingImagesChange = { vm.pendingImages = it }, onTierRowPositionsChange = { vm.tierRowPositions = it },
+            videoConfig = vm.videoGenerationConfig, onVideoConfigChange = { vm.videoGenerationConfig = it },
             onDisableClickAddChange = { vm.disableClickAdd = it }, onFloatOffsetXChange = { vm.floatOffsetX = it },
             onFloatOffsetYChange = { vm.floatOffsetY = it }, onExternalBadgeChange = { vm.externalBadgeEnabled = it },
             onFollowSystemThemeChange = onFollowSystemThemeChange,

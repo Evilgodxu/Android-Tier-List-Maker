@@ -285,6 +285,4 @@
     <string name="video_saved">视频已保存到 %1$s</string>
     <string name="share_video">分享视频</string>
     <string name="cancel_export">取消导出</string>
-    <string name="video_preset_manager">编排预设</string>
-    <string name="save_video_preset">保存编排预设</string>
 </resources>

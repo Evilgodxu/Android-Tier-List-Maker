@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
+import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.screens.tierlist.logic.utils.FileUtils
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.data.tierlist.PresetData
@@ -36,6 +37,7 @@ class PresetOperationHandler(
     private val onTitleChange: (String) -> Unit,
     private val onAuthorChange: (String) -> Unit,
     private val onTierRowPositionsReset: () -> Unit,
+    private val onVideoConfigChange: (VideoGenerationConfig) -> Unit,
     private val onResumeDraftSave: (() -> Unit)?,
     private val onSkipDraftSave: (() -> Unit)?,
     private val showToast: (String, Int) -> Unit
@@ -76,18 +78,19 @@ class PresetOperationHandler(
         tierImages.clear(); tierImages.addAll(result.tierImages.map { TierImage(id = it.id, tierLabel = it.tierLabel, uri = it.uri, name = it.name, badgeUri = it.badgeUri, badgeUri2 = it.badgeUri2, badgeUri3 = it.badgeUri3, audioUri = it.audioUri, originalUri = it.originalUri, cropPositionX = it.cropPositionX, cropPositionY = it.cropPositionY, cropScale = it.cropScale, isCropped = it.isCropped, cropRatio = it.cropRatio, useCustomCrop = it.useCustomCrop, customCropWidth = it.customCropWidth, customCropHeight = it.customCropHeight) })
         onPendingImagesChange(result.pendingImages); onTitleChange(importResult.presetData.title); onAuthorChange(importResult.presetData.author)
         settingsService.clearCropSettings(); settingsService.customCropWidth = result.customCropWidth; settingsService.customCropHeight = result.customCropHeight; settingsService.useCustomCropSize = result.useCustomCropSize; settingsService.cropRatio = result.cropRatio
+        onVideoConfigChange(result.videoConfig)
         onTierRowPositionsReset()
         val message = when (importResult.status) { PresetManager.ImportStatus.ALREADY_EXISTS -> "预设已加载"; else -> "导入预设成功" }
         showToast(message, android.widget.Toast.LENGTH_SHORT)
     }
 
-    fun handleExportPreset(uri: Uri?, presetName: String, tierListTitle: String, authorName: String, currentPendingImages: List<Uri>) {
+    fun handleExportPreset(uri: Uri?, presetName: String, tierListTitle: String, authorName: String, currentPendingImages: List<Uri>, videoConfig: VideoGenerationConfig) {
         if (uri == null) { onResumeDraftSave?.invoke(); return }
         dialogState.isExportingPreset = true; onSkipDraftSave?.invoke()
         scope.launch {
             try {
                 yield()
-                val presetData = withContext(Dispatchers.IO) { presetManager.createPresetData(title = tierListTitle, author = authorName, tiers = tiers, tierImages = tierImages, pendingImages = currentPendingImages, cropPositionX = settingsService.cropPositionX, cropPositionY = settingsService.cropPositionY, customCropWidth = settingsService.customCropWidth, customCropHeight = settingsService.customCropHeight, useCustomCropSize = settingsService.useCustomCropSize, cropRatio = settingsService.cropRatio) }
+                val presetData = withContext(Dispatchers.IO) { presetManager.createPresetData(title = tierListTitle, author = authorName, tiers = tiers, tierImages = tierImages, pendingImages = currentPendingImages, cropPositionX = settingsService.cropPositionX, cropPositionY = settingsService.cropPositionY, customCropWidth = settingsService.customCropWidth, customCropHeight = settingsService.customCropHeight, useCustomCropSize = settingsService.useCustomCropSize, cropRatio = settingsService.cropRatio, videoConfig = videoConfig) }
                 val outputFile = File(context.cacheDir, "$presetName.tdds")
                 withContext(Dispatchers.IO) {
                     presetManager.exportPreset(presetData, outputFile)
@@ -124,6 +127,7 @@ class PresetOperationHandler(
                     tierImages.clear(); tierImages.addAll(result.tierImages.map { TierImage(id = it.id, tierLabel = it.tierLabel, uri = it.uri, name = it.name, badgeUri = it.badgeUri, badgeUri2 = it.badgeUri2, badgeUri3 = it.badgeUri3, audioUri = it.audioUri, originalUri = it.originalUri, cropPositionX = it.cropPositionX, cropPositionY = it.cropPositionY, cropScale = it.cropScale, isCropped = it.isCropped, cropRatio = it.cropRatio, useCustomCrop = it.useCustomCrop, customCropWidth = it.customCropWidth, customCropHeight = it.customCropHeight) })
                     onPendingImagesChange(result.pendingImages); onTitleChange(draftData.title); onAuthorChange(draftData.author)
                     settingsService.clearCropSettings(); settingsService.customCropWidth = result.customCropWidth; settingsService.customCropHeight = result.customCropHeight; settingsService.useCustomCropSize = result.useCustomCropSize; settingsService.cropRatio = result.cropRatio
+                    onVideoConfigChange(result.videoConfig)
                     onTierRowPositionsReset(); showToast("草稿已恢复", android.widget.Toast.LENGTH_SHORT)
                 } else throw IllegalStateException("加载草稿失败")
             } catch (e: Exception) { showToast("恢复草稿失败", android.widget.Toast.LENGTH_SHORT) }
@@ -131,7 +135,7 @@ class PresetOperationHandler(
         }
     }
 
-    suspend fun saveDraft(tierListTitle: String, authorName: String, currentPendingImages: List<Uri>) {
+    suspend fun saveDraft(tierListTitle: String, authorName: String, currentPendingImages: List<Uri>, videoConfig: VideoGenerationConfig) {
         try {
             val presetData = withContext(Dispatchers.IO) {
                 presetManager.createPresetData(
@@ -142,7 +146,8 @@ class PresetOperationHandler(
                     customCropWidth = settingsService.customCropWidth,
                     customCropHeight = settingsService.customCropHeight,
                     useCustomCropSize = settingsService.useCustomCropSize,
-                    cropRatio = settingsService.cropRatio
+                    cropRatio = settingsService.cropRatio,
+                    videoConfig = videoConfig
                 )
             }
             withContext(Dispatchers.IO) { presetManager.saveDraft(presetData) }
@@ -164,7 +169,7 @@ class PresetOperationHandler(
 }
 
 @Composable
-fun rememberPresetOperationHandler(scope: CoroutineScope, dialogState: DialogState, presetManager: PresetManager, settingsService: SettingsService, tiers: SnapshotStateList<TierItem>, tierImages: SnapshotStateList<TierImage>, onPendingImagesChange: (List<Uri>) -> Unit, onTitleChange: (String) -> Unit, onAuthorChange: (String) -> Unit, onTierRowPositionsReset: () -> Unit, onResumeDraftSave: (() -> Unit)?, onSkipDraftSave: (() -> Unit)?, showToast: (String, Int) -> Unit): PresetOperationHandler {
+fun rememberPresetOperationHandler(scope: CoroutineScope, dialogState: DialogState, presetManager: PresetManager, settingsService: SettingsService, tiers: SnapshotStateList<TierItem>, tierImages: SnapshotStateList<TierImage>, onPendingImagesChange: (List<Uri>) -> Unit, onTitleChange: (String) -> Unit, onAuthorChange: (String) -> Unit, onTierRowPositionsReset: () -> Unit, onVideoConfigChange: (VideoGenerationConfig) -> Unit, onResumeDraftSave: (() -> Unit)?, onSkipDraftSave: (() -> Unit)?, showToast: (String, Int) -> Unit): PresetOperationHandler {
     val context = LocalContext.current
-    return remember(scope, dialogState, presetManager) { PresetOperationHandler(context = context, scope = scope, dialogState = dialogState, presetManager = presetManager, settingsService = settingsService, tiers = tiers, tierImages = tierImages, onPendingImagesChange = onPendingImagesChange, onTitleChange = onTitleChange, onAuthorChange = onAuthorChange, onTierRowPositionsReset = onTierRowPositionsReset, onResumeDraftSave = onResumeDraftSave, onSkipDraftSave = onSkipDraftSave, showToast = showToast) }
+    return remember(scope, dialogState, presetManager) { PresetOperationHandler(context = context, scope = scope, dialogState = dialogState, presetManager = presetManager, settingsService = settingsService, tiers = tiers, tierImages = tierImages, onPendingImagesChange = onPendingImagesChange, onTitleChange = onTitleChange, onAuthorChange = onAuthorChange, onTierRowPositionsReset = onTierRowPositionsReset, onVideoConfigChange = onVideoConfigChange, onResumeDraftSave = onResumeDraftSave, onSkipDraftSave = onSkipDraftSave, showToast = showToast) }
 }
