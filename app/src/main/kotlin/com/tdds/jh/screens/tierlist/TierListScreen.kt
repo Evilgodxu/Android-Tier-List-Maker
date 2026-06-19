@@ -38,11 +38,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.VideoSettings
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -63,7 +63,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -270,12 +269,12 @@ fun TierListMakerApp(
             ) {
                 Row(modifier = Modifier.align(Alignment.CenterStart), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { onThemeChange(!isDarkTheme) }) {
-                        Icon(painter = painterResource(id = if (isDarkTheme) R.drawable.ic_sun_light else R.drawable.ic_moon_light),
+                        Icon(imageVector = if (isDarkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
                             contentDescription = if (isDarkTheme) stringResource(R.string.switch_to_light_theme) else stringResource(R.string.switch_to_dark_theme),
                             modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
                     }
                     IconButton(onClick = { vm.dialogState.showVideoGenerationConfigDialog = true }) {
-                        Icon(imageVector = Icons.Default.PlayArrow,
+                        Icon(imageVector = Icons.Outlined.VideoSettings,
                             contentDescription = stringResource(R.string.video_generation),
                             modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
                     }
@@ -284,10 +283,10 @@ fun TierListMakerApp(
                     color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
                 Row(modifier = Modifier.align(Alignment.CenterEnd), verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { vm.dialogState.showResourceManageDialog = true }) {
-                        Icon(painterResource(id = R.drawable.ic_resource_manage), stringResource(R.string.resource_management), Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(imageVector = Icons.Outlined.Folder, contentDescription = stringResource(R.string.resource_management), modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
                     }
                     IconButton(onClick = { vm.dialogState.showSettingsMenu = true }) {
-                        Icon(painterResource(id = R.drawable.ic_menu_light), stringResource(R.string.settings), Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
+                        Icon(imageVector = Icons.Outlined.Settings, contentDescription = stringResource(R.string.settings), modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
                     }
                 }
             }

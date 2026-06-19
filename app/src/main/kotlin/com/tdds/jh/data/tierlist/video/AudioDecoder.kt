@@ -5,7 +5,7 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
-import java.nio.ByteBuffer
+import kotlin.math.min
 
 /**
  * 音频解码器
@@ -66,13 +66,18 @@ object AudioDecoder {
         codec.configure(format, null, null, 0)
         codec.start()
 
-        val samples = mutableListOf<Short>()
+        val chunks = mutableListOf<ShortArray>()
+        var totalSampleCount = 0
         val bufferInfo = MediaCodec.BufferInfo()
         var sawInputEOS = false
         var sawOutputEOS = false
 
         val sourceSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         val sourceChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
+
+        val maxSamples = maxDurationSeconds?.let { seconds ->
+            (seconds * targetSampleRate * targetChannels).toInt()
+        }
 
         try {
             while (!sawOutputEOS) {
@@ -109,12 +114,10 @@ object AudioDecoder {
                             targetSampleRate,
                             targetChannels
                         )
-                        samples.addAll(resampled.toList())
+                        chunks.add(resampled)
+                        totalSampleCount += resampled.size
 
-                        val maxSamples = maxDurationSeconds?.let { seconds ->
-                            (seconds * targetSampleRate * targetChannels).toInt()
-                        }
-                        if (maxSamples != null && samples.size >= maxSamples) {
+                        if (maxSamples != null && totalSampleCount >= maxSamples) {
                             sawOutputEOS = true
                         }
 
@@ -127,13 +130,25 @@ object AudioDecoder {
             }
         } catch (_: Exception) {
             return null
+        } catch (_: OutOfMemoryError) {
+            return null
         } finally {
             codec.stop()
             codec.release()
             extractor.release()
         }
 
-        return samples.toShortArray()
+        val resultSize = if (maxSamples != null) min(totalSampleCount, maxSamples) else totalSampleCount
+        if (resultSize <= 0) return ShortArray(0)
+        val result = ShortArray(resultSize)
+        var offset = 0
+        for (chunk in chunks) {
+            val copyLen = min(chunk.size, resultSize - offset)
+            if (copyLen <= 0) break
+            chunk.copyInto(result, offset, 0, copyLen)
+            offset += copyLen
+        }
+        return result
     }
 
     private fun bytesToShorts(bytes: ByteArray): ShortArray {

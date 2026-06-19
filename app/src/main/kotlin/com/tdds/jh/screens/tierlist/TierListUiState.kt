@@ -204,6 +204,7 @@ class DialogState {
     // ==================== 信息对话框 ====================
     var showDonateDialog by mutableStateOf(false)
     var showInstructionsDialog by mutableStateOf(false)
+    var showOpenSourceLicensesDialog by mutableStateOf(false)
 
     // ==================== 图包管理对话框 ====================
     var showManagePackagesDialog by mutableStateOf(false)
@@ -297,6 +298,7 @@ class DialogState {
         showResourceManageDialog = false
         showDonateDialog = false
         showInstructionsDialog = false
+        showOpenSourceLicensesDialog = false
         showManagePackagesDialog = false
         showPackageConfirmDialog = false
         showImportPackageDialog = false

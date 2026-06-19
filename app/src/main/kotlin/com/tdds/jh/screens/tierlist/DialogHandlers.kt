@@ -283,6 +283,11 @@ class DialogHandlers(
         dialogState.showManagePresetsDialog = true
     }
 
+    fun onShowOpenSourceLicenses() {
+        dialogState.showSettingsMenu = false
+        dialogState.showOpenSourceLicensesDialog = true
+    }
+
     // ==================== 程序设置对话框处理器 ====================
 
     fun onProgramSettingsDismiss() {

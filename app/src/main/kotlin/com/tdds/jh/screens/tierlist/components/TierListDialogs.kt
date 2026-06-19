@@ -54,6 +54,7 @@ import com.tdds.jh.screens.tierlist.components.dialogs.EditAuthorDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.EditTierNameDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.EditTitleDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.LanguageSelectionDialog
+import com.tdds.jh.screens.tierlist.components.dialogs.OpenSourceLicensesDialog
 import com.tdds.jh.screens.tierlist.components.dialogs.ProgramSettingsDialog
 import com.tdds.jh.ui.theme.LocalExtendedColors
 import com.tdds.jh.screens.tierlist.service.SettingsService
@@ -324,7 +325,14 @@ fun TierListDialogs(
             onShowFeedback = handlers::onShowFeedback,
             onImagePackage = handlers::onImagePackage,
             onShowProgramSettings = handlers::onShowProgramSettings,
-            onManagePresets = handlers::onManagePresets
+            onManagePresets = handlers::onManagePresets,
+            onShowOpenSourceLicenses = handlers::onShowOpenSourceLicenses
+        )
+    }
+
+    if (dialogState.showOpenSourceLicensesDialog) {
+        OpenSourceLicensesDialog(
+            onDismiss = { dialogState.showOpenSourceLicensesDialog = false }
         )
     }
 

@@ -19,8 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -198,10 +198,10 @@ private fun ActionOrderSection(
             )
             Row {
                 IconButton(onClick = { onMoveUp(index) }, enabled = index > 0) {
-                    Icon(Icons.Default.KeyboardArrowUp, stringResource(R.string.move_left))
+                    Icon(Icons.Outlined.KeyboardArrowUp, stringResource(R.string.move_left))
                 }
                 IconButton(onClick = { onMoveDown(index) }, enabled = index < actionOrder.size - 1) {
-                    Icon(Icons.Default.KeyboardArrowDown, stringResource(R.string.move_right))
+                    Icon(Icons.Outlined.KeyboardArrowDown, stringResource(R.string.move_right))
                 }
             }
         }
@@ -261,7 +261,7 @@ private fun IntervalSection(
     FloatSlider(
         label = stringResource(R.string.badge_interval),
         value = config.badgeInterval,
-        range = 0.1f..5f,
+        range = 0.1f..1f,
         onValueChange = { onConfigChange(config.copy(badgeInterval = it)) }
     )
 

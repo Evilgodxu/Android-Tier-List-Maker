@@ -29,8 +29,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.ArrowDropUp
+import androidx.compose.material.icons.outlined.ArrowDropDown
+import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -291,13 +291,13 @@ fun ReorderableCollectionItemScope.SwipeableTierRow(
                     verticalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ArrowDropUp,
+                        imageVector = Icons.Outlined.ArrowDropUp,
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = Modifier.size(20.dp)
                     )
                     Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
+                        imageVector = Icons.Outlined.ArrowDropDown,
                         contentDescription = null,
                         tint = Color.Black,
                         modifier = Modifier.size(20.dp)

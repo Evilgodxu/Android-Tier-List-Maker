@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,8 +56,9 @@ fun PreviewDialog(
                 Text(stringResource(R.string.preview_title))
                 if (onThemeToggle != null && !isSaving && !isSharing) {
                     IconButton(onClick = onThemeToggle) {
-                        val iconRes = if (appDarkTheme) R.drawable.ic_sun_light else R.drawable.ic_moon_light
-                        Icon(painter = painterResource(iconRes), contentDescription = if (isDarkTheme) stringResource(R.string.switch_to_light_theme) else stringResource(R.string.switch_to_dark_theme), tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
+                        Icon(imageVector = if (appDarkTheme) Icons.Outlined.LightMode else Icons.Outlined.DarkMode,
+                            contentDescription = if (isDarkTheme) stringResource(R.string.switch_to_light_theme) else stringResource(R.string.switch_to_dark_theme),
+                            tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(24.dp))
                     }
                 }
             }

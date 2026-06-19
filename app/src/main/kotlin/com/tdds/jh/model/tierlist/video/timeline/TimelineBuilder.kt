@@ -1,5 +1,6 @@
 package com.tdds.jh.model.tierlist.video.timeline
 
+import android.net.Uri
 import com.tdds.jh.data.tierlist.video.AudioDurationProvider
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
@@ -36,7 +37,10 @@ class TimelineBuilder(
 
         val maxActionEnd = actions.maxOfOrNull { it.endTime } ?: 0f
         val maxAudioEnd = audioSegments.maxOfOrNull { it.startTime + it.duration } ?: 0f
-        val totalDuration = maxOf(maxActionEnd, maxAudioEnd)
+        val bgmDuration = config.backgroundMusicUri?.let { uriString ->
+            runCatching { audioDurationProvider.getDurationSeconds(Uri.parse(uriString)) }.getOrNull() ?: 0f
+        } ?: 0f
+        val totalDuration = maxOf(maxActionEnd, maxAudioEnd, bgmDuration)
 
         return Timeline(actions, audioSegments, totalDuration)
     }

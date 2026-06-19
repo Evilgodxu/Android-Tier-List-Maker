@@ -50,7 +50,8 @@ fun SettingsMenuDialog(
     onShowFeedback: () -> Unit,
     onImagePackage: () -> Unit,
     onShowProgramSettings: () -> Unit,
-    onManagePresets: () -> Unit
+    onManagePresets: () -> Unit,
+    onShowOpenSourceLicenses: () -> Unit
 ) {
     val extendedColors = LocalExtendedColors.current
     val settingsItems = listOf(
@@ -73,6 +74,10 @@ fun SettingsMenuDialog(
         SettingsItem(
             title = stringResource(R.string.donate),
             onClick = onShowFeedback
+        ),
+        SettingsItem(
+            title = stringResource(R.string.open_source_licenses),
+            onClick = onShowOpenSourceLicenses
         )
     )
 

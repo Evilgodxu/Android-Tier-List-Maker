@@ -38,6 +38,7 @@
     <string name="author_placeholder">留空则不显示</string>
     <string name="instructions">使用说明</string>
     <string name="donate">捐赠打赏</string>
+    <string name="open_source_licenses">开源许可</string>
     <string name="donate_thanks">感谢您的支持！</string>
     <string name="donate_alipay">支付宝</string>
     <string name="donate_no_app">未找到可用的支付应用</string>
