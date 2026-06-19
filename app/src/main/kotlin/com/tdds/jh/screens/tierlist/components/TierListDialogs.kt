@@ -167,7 +167,8 @@ fun TierListDialogs(
             onMove = handlers::onImageMove,
             onRename = handlers::onImageRename,
             onView = handlers::onImageView,
-            onCrop = handlers::onImageCrop
+            onCrop = handlers::onImageCrop,
+            onAudio = handlers::onImageAudio
         )
     }
 

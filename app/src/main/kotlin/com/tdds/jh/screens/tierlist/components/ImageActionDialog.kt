@@ -30,6 +30,7 @@ import com.tdds.jh.ui.theme.LocalExtendedColors
  * @param onRename 重命名回调
  * @param onView 查看图片回调
  * @param onCrop 裁剪图片回调
+ * @param onAudio 设置解说音频回调
  */
 @Composable
 fun ImageActionDialog(
@@ -39,7 +40,8 @@ fun ImageActionDialog(
     onMove: () -> Unit,
     onRename: () -> Unit,
     onView: () -> Unit,
-    onCrop: () -> Unit
+    onCrop: () -> Unit,
+    onAudio: () -> Unit
 ) {
     val extendedColors = LocalExtendedColors.current
 
@@ -90,6 +92,16 @@ fun ImageActionDialog(
                     }
                     TextButton(onClick = onSetBadge) {
                         Text(stringResource(R.string.set_badges))
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                // 第三行：解说音频
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    TextButton(onClick = onAudio) {
+                        Text(stringResource(R.string.image_audio))
                     }
                 }
             }

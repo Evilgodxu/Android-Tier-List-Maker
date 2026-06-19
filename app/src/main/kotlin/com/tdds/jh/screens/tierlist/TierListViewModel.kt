@@ -16,10 +16,12 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -31,9 +33,12 @@ import androidx.core.net.toUri
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.PresetData
 import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.data.tierlist.video.VideoExporter
 import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.TierListConfig
+import com.tdds.jh.model.tierlist.video.ActionRecorder
+import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.screens.tierlist.logic.usecases.ImagePickerHandler
 import com.tdds.jh.screens.tierlist.logic.usecases.PackageOperationHandler
 import com.tdds.jh.screens.tierlist.logic.usecases.PresetOperationHandler
@@ -46,8 +51,10 @@ import com.tdds.jh.screens.tierlist.logic.utils.withStoragePermission
 import com.tdds.jh.screens.tierlist.service.SettingsService
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -78,6 +85,19 @@ class TierListViewModel(
     var floatOffsetY by mutableStateOf(initialSavedState?.floatOffsetY ?: settingsService.floatOffsetY)
     var externalBadgeEnabled by mutableStateOf(initialSavedState?.externalBadgeEnabled ?: settingsService.externalBadgeEnabled)
     var nameBelowImage by mutableStateOf(initialSavedState?.nameBelowImage ?: settingsService.nameBelowImage)
+
+    // ==================== 3.0 视频生成配置与录制 ====================
+    var videoGenerationConfig by mutableStateOf(VideoGenerationConfig())
+    val actionRecorder = ActionRecorder()
+
+    // ==================== 视频导出状态 ====================
+    var isExportingVideo by mutableStateOf(false)
+    var exportProgress by mutableStateOf(0f)
+    var exportRenderedFrames by mutableIntStateOf(0)
+    var exportTotalFrames by mutableIntStateOf(0)
+    var exportCancelRequested by mutableStateOf(false)
+    var exportErrorMessage by mutableStateOf<String?>(null)
+    var exportedVideoUri by mutableStateOf<Uri?>(null)
 
     var pendingImages by mutableStateOf(initialSavedState?.pendingImages?.map { it.toUri() } ?: emptyList())
     var tierListTitle by mutableStateOf(initialSavedState?.tierListTitle ?: context.getString(R.string.default_title))
@@ -116,6 +136,7 @@ class TierListViewModel(
     lateinit var replaceImagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
     lateinit var badgeImagePicker: ManagedActivityResultLauncher<PickVisualMediaRequest, Uri?>
     lateinit var badgeImagePickerMultiple: ManagedActivityResultLauncher<PickVisualMediaRequest, List<@JvmSuppressWildcards Uri>>
+    lateinit var audioPickerLauncher: ManagedActivityResultLauncher<String, Uri?>
     lateinit var permissionLauncher: ManagedActivityResultLauncher<String, Boolean>
     lateinit var presetFilePicker: ManagedActivityResultLauncher<String, Uri?>
     lateinit var presetExportLauncher: ManagedActivityResultLauncher<String, Uri?>
@@ -134,8 +155,97 @@ class TierListViewModel(
         floatOffsetX = floatOffsetX,
         floatOffsetY = floatOffsetY,
         externalBadgeEnabled = externalBadgeEnabled,
-        nameBelowImage = nameBelowImage
+        nameBelowImage = nameBelowImage,
+        videoGenerationConfig = videoGenerationConfig
     )
+
+    /**
+     * 为指定图片设置解说音频 URI
+     */
+    fun setImageAudio(tierImageId: String, audioUri: Uri?) {
+        val idx = tierImages.indexOfFirst { it.id == tierImageId }
+        if (idx != -1) {
+            tierImages[idx] = tierImages[idx].copy(audioUri = audioUri)
+        }
+    }
+
+    /**
+     * 移除指定图片的解说音频
+     */
+    fun removeImageAudio(tierImageId: String) {
+        setImageAudio(tierImageId, null)
+    }
+
+    /**
+     * 导出视频
+     */
+    fun exportVideo(
+        outputFile: File,
+        isDarkTheme: Boolean,
+        disableCustomFont: Boolean,
+        onComplete: (Boolean, Uri?) -> Unit
+    ) {
+        if (isExportingVideo) return
+        scope.launch(Dispatchers.IO) {
+            isExportingVideo = true
+            exportCancelRequested = false
+            exportProgress = 0f
+            exportRenderedFrames = 0
+            exportTotalFrames = 0
+            exportErrorMessage = null
+            exportedVideoUri = null
+
+            try {
+                val success = VideoExporter(context).export(
+                    tiers = tiers,
+                    tierImages = tierImages,
+                    config = videoGenerationConfig,
+                    isDarkTheme = isDarkTheme,
+                    disableCustomFont = disableCustomFont,
+                    externalBadgeEnabled = externalBadgeEnabled,
+                    nameBelowImage = nameBelowImage,
+                    title = tierListTitle,
+                    authorName = authorName,
+                    outputFile = outputFile,
+                    onProgress = { progress, rendered, total ->
+                        exportProgress = progress
+                        exportRenderedFrames = rendered
+                        exportTotalFrames = total
+                    },
+                    onCancel = { exportCancelRequested }
+                )
+                val uri = if (success) Uri.fromFile(outputFile) else null
+                exportedVideoUri = uri
+                withContext(Dispatchers.Main) { onComplete(success, uri) }
+            } catch (e: Exception) {
+                exportErrorMessage = e.message
+                withContext(Dispatchers.Main) { onComplete(false, null) }
+            } finally {
+                isExportingVideo = false
+            }
+        }
+    }
+
+    /**
+     * 记录图片放置动作
+     */
+    fun recordImagePlaced(tierImageId: String, tierLabel: String) {
+        actionRecorder.recordImagePlaced(tierImageId, tierLabel)
+    }
+
+    /**
+     * 记录图片命名动作
+     */
+    fun recordImageNamed(tierImageId: String, name: String) {
+        actionRecorder.recordImageNamed(tierImageId, name)
+    }
+
+    /**
+     * 记录小图标添加动作
+     */
+    fun recordBadgeAdded(tierImageId: String, slotIndex: Int) {
+        actionRecorder.recordBadgeAdded(tierImageId, slotIndex)
+    }
 
     /** 检查当前是否为默认状态（根据当前语言动态判断） */
     fun isDefaultState(): Boolean {
@@ -159,6 +269,7 @@ class TierListViewModel(
         tiers.addAll(currentDefaultTiers)
         tierImages.clear()
         tierRowPositions = emptyMap()
+        actionRecorder.clear()
         settingsService.clearCropSettings()
         if (imagesToReturn.isNotEmpty()) pendingImages = pendingImages + imagesToReturn
         tierListTitle = context.getString(R.string.default_title)
@@ -220,12 +331,13 @@ fun rememberTierListViewModel(
             vm.floatOffsetY = state.floatOffsetY
             vm.externalBadgeEnabled = state.externalBadgeEnabled
             vm.nameBelowImage = state.nameBelowImage
+            vm.videoGenerationConfig = state.videoGenerationConfig
         }
     }
 
     // 当状态变化时保存到 savedState（用于屏幕旋转恢复）
     LaunchedEffect(vm.tiers.size, vm.tierImages.size, vm.pendingImages.size, vm.tierListTitle, vm.authorName,
-        vm.disableClickAdd, vm.floatOffsetX, vm.floatOffsetY, vm.externalBadgeEnabled, vm.nameBelowImage) {
+        vm.disableClickAdd, vm.floatOffsetX, vm.floatOffsetY, vm.externalBadgeEnabled, vm.nameBelowImage, vm.videoGenerationConfig) {
         savedState = vm.exportSavedState()
     }
 
@@ -238,7 +350,8 @@ fun rememberTierListViewModel(
         scope = scope, dialogState = vm.dialogState, presetManager = presetManager,
         tierImages = vm.tierImages,
         onPendingImagesChange = { vm.pendingImages = it },
-        onResumeDraftSave = onResumeDraftSave
+        onResumeDraftSave = onResumeDraftSave,
+        onBadgeAdded = { id, slot -> vm.recordBadgeAdded(id, slot) }
     )
     vm.presetOperationHandler = rememberPresetOperationHandler(
         scope = scope, dialogState = vm.dialogState, presetManager = presetManager,
@@ -312,6 +425,21 @@ fun rememberTierListViewModel(
     vm.packageExportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
         vm.packageOperationHandler.handleExportPackage(uri, vm.dialogState.packageToExport)
     }
+    vm.audioPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null && vm.dialogState.selectedImageForAudio != null) {
+            val imageId = vm.dialogState.selectedImageForAudio!!.id
+            scope.launch {
+                val fileUri = withContext(Dispatchers.IO) { presetManager.copyAudioUriToWorkDir(uri) }
+                if (fileUri != null) {
+                    vm.setImageAudio(imageId, fileUri)
+                    showToastWithoutIcon(context, context.getString(R.string.audio_added))
+                } else {
+                    showToastWithoutIcon(context, "音频添加失败")
+                }
+                vm.dialogState.selectedImageForAudio = null
+            }
+        }
+    }
     vm.imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxItems = 50)) { uris ->
         vm.imagePickerHandler.handleImagePickerResult(uris, vm.pendingImages)
     }
@@ -367,7 +495,9 @@ fun rememberTierListViewModel(
             },
             deleteBadgeFile = { badgeUri, _ ->
                 try { val f = File(badgeUri.path ?: return@DialogHandlers false); if (f.exists()) f.delete() else false } catch (_: Exception) { false }
-            }
+            },
+            onImageNamed = { id, name -> vm.recordImageNamed(id, name) },
+            onBadgeAdded = { id, slot -> vm.recordBadgeAdded(id, slot) }
         )
     }
 

@@ -38,7 +38,9 @@ class DialogHandlers(
     private val launchBadgePicker: (Int) -> Unit,
     private val launchBadgePickerForAdding: () -> Unit,
     private val deleteBadge: (Int) -> Unit,
-    private val deleteBadgeFile: (Uri, com.tdds.jh.data.tierlist.PresetManager) -> Boolean
+    private val deleteBadgeFile: (Uri, com.tdds.jh.data.tierlist.PresetManager) -> Boolean,
+    private val onImageNamed: ((tierImageId: String, name: String) -> Unit)? = null,
+    private val onBadgeAdded: ((tierImageId: String, slotIndex: Int) -> Unit)? = null
 ) {
 
     // ==================== 图片操作对话框处理器 ====================
@@ -51,6 +53,12 @@ class DialogHandlers(
         dialogState.imageForBadge = dialogState.selectedImageForAction
         dialogState.showImageActionDialog = false
         dialogState.showSetBadgeDialog = true
+    }
+
+    fun onImageAudio() {
+        dialogState.selectedImageForAudio = dialogState.selectedImageForAction
+        dialogState.showImageActionDialog = false
+        dialogState.showImageAudioDialog = true
     }
 
     fun onImageReplace() {
@@ -170,6 +178,7 @@ class DialogHandlers(
             if (index != -1) {
                 tierImages[index] = tierImages[index].copy(name = newName)
                 onTierImagesChange()
+                if (newName.isNotBlank()) onImageNamed?.invoke(image.id, newName)
             }
         }
         onEditImageNameDismiss()
@@ -203,6 +212,7 @@ class DialogHandlers(
                     else -> tierImages[index].copy(badgeUri3 = badgeUri)
                 }
                 onTierImagesChange()
+                onBadgeAdded?.invoke(image.id, slot - 1)
             }
         }
     }

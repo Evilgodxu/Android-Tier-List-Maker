@@ -64,6 +64,7 @@ data class TierImageData(
     val badgeFileName1: String? = null,
     val badgeFileName2: String? = null,
     val badgeFileName3: String? = null,
+    val audioFileName: String? = null,
     // 裁剪状态字段
     val cropPositionX: Float = 0.5f,
     val cropPositionY: Float = 0.5f,
@@ -99,6 +100,7 @@ class PresetManager(private val context: Context) {
         const val CONFIG_FILE_NAME = "preset_config.json"
         const val IMAGES_FOLDER_NAME = "images"
         const val BADGES_FOLDER_NAME = "badges"
+        const val AUDIO_FOLDER_NAME = "audio"
         const val DRAFT_PRESET_NAME = "__draft__"
         const val DRAFT_FOLDER_NAME = "Draft"
         const val PACKAGES_FOLDER_NAME = "Packages"
@@ -173,7 +175,7 @@ class PresetManager(private val context: Context) {
 
     /**
      * 清理工作图片文件夹
-     * 包括images和badges子文件夹中的所有文件
+     * 包括images、badges、audio子文件夹中的所有文件
      */
     fun cleanupWorkImages() {
         var deletedFiles = 0
@@ -193,12 +195,19 @@ class PresetManager(private val context: Context) {
             deletedFiles++
         }
 
+        // 清理audio子文件夹
+        val audioDir = File(workImagesDir, AUDIO_FOLDER_NAME)
+        audioDir.listFiles()?.forEach { file ->
+            file.deleteRecursively()
+            deletedFiles++
+        }
+
         // 清理工作目录下的其他直接文件（兼容旧数据）
         workImagesDir.listFiles()?.forEach { file ->
             if (file.isFile) {
                 file.delete()
                 deletedFiles++
-            } else if (file.name != IMAGES_FOLDER_NAME && file.name != BADGES_FOLDER_NAME) {
+            } else if (file.name != IMAGES_FOLDER_NAME && file.name != BADGES_FOLDER_NAME && file.name != AUDIO_FOLDER_NAME) {
                 file.deleteRecursively()
                 deletedFolders++
             }
@@ -877,6 +886,42 @@ class PresetManager(private val context: Context) {
     }
 
     /**
+     * 将音频URI复制到工作目录的 audio 文件夹
+     * @param uri 音频文件 URI
+     * @return 复制后的文件 URI，失败返回 null
+     */
+    fun copyAudioUriToWorkDir(uri: Uri): Uri? {
+        val audioDir = File(workImagesDir, AUDIO_FOLDER_NAME)
+        audioDir.mkdirs()
+
+        val originalName = extractFileNameFromUri(uri) ?: "audio_${System.currentTimeMillis()}.m4a"
+        val safeName = sanitizeFileName(originalName).let { if (it.isBlank()) "audio_${System.currentTimeMillis()}.m4a" else it }
+        val extension = safeName.substringAfterLast(".", "m4a").lowercase().let {
+            if (it in listOf("mp3", "wav", "m4a", "aac", "ogg", "flac")) it else "m4a"
+        }
+        val baseName = safeName.substringBeforeLast(".", safeName)
+        val targetFile = File(audioDir, "${baseName}.${extension}")
+
+        return try {
+            when (uri.scheme) {
+                "file" -> {
+                    val sourceFile = File(uri.path!!)
+                    if (sourceFile.exists()) sourceFile.copyTo(targetFile, overwrite = true)
+                    else return null
+                }
+                else -> {
+                    context.contentResolver.openInputStream(uri)?.use { input ->
+                        FileOutputStream(targetFile).use { output -> input.copyTo(output) }
+                    } ?: return null
+                }
+            }
+            Uri.fromFile(targetFile)
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    /**
      * 将URI复制到临时文件夹
      * @param uri 图片URI
      * @param folder 目标文件夹（IMAGES_FOLDER_NAME 或 BADGES_FOLDER_NAME）
@@ -982,6 +1027,7 @@ class PresetManager(private val context: Context) {
                         put("badgeFileName1", image.badgeFileName1)
                         put("badgeFileName2", image.badgeFileName2)
                         put("badgeFileName3", image.badgeFileName3)
+                        put("audioFileName", image.audioFileName)
                         // 保存裁剪状态
                         put("cropPositionX", image.cropPositionX)
                         put("cropPositionY", image.cropPositionY)
@@ -1031,6 +1077,7 @@ class PresetManager(private val context: Context) {
                 badgeFileName1 = imageJson.optString("badgeFileName1").takeIf { it.isNotEmpty() },
                 badgeFileName2 = imageJson.optString("badgeFileName2").takeIf { it.isNotEmpty() },
                 badgeFileName3 = imageJson.optString("badgeFileName3").takeIf { it.isNotEmpty() },
+                audioFileName = imageJson.optString("audioFileName").takeIf { it.isNotEmpty() },
                 // 恢复裁剪状态
                 cropPositionX = imageJson.optDouble("cropPositionX", 0.5).toFloat(),
                 cropPositionY = imageJson.optDouble("cropPositionY", 0.5).toFloat(),
@@ -1178,19 +1225,23 @@ class PresetManager(private val context: Context) {
         // 收集所有需要的图片文件名
         val neededImages = mutableSetOf<String>()
         val neededBadges = mutableSetOf<String>()
+        val neededAudio = mutableSetOf<String>()
 
         presetData.tierImages.forEach { imageData ->
             neededImages.add(imageData.imageFileName)
             imageData.badgeFileName1?.let { neededBadges.add(it) }
             imageData.badgeFileName2?.let { neededBadges.add(it) }
             imageData.badgeFileName3?.let { neededBadges.add(it) }
+            imageData.audioFileName?.let { neededAudio.add(it) }
         }
         presetData.pendingImages.forEach { neededImages.add(it) }
 
         val workImagesFolder = File(workImagesDir, IMAGES_FOLDER_NAME)
         val workBadgesFolder = File(workImagesDir, BADGES_FOLDER_NAME)
+        val workAudioFolder = File(workImagesDir, AUDIO_FOLDER_NAME)
         workImagesFolder.mkdirs()
         workBadgesFolder.mkdirs()
+        workAudioFolder.mkdirs()
         
         // 获取所有可用的小图标文件名（去重后的），并添加到neededBadges中
         // 这样保存预设时会包含所有小图标，而不仅仅是预设中引用的
@@ -1253,11 +1304,13 @@ class PresetManager(private val context: Context) {
         // 重新收集更新后的图片文件名
         val finalNeededImages = mutableSetOf<String>()
         val finalNeededBadges = mutableSetOf<String>()
+        val finalNeededAudio = mutableSetOf<String>()
         updatedPresetData.tierImages.forEach { imageData ->
             finalNeededImages.add(imageData.imageFileName)
             imageData.badgeFileName1?.let { finalNeededBadges.add(it) }
             imageData.badgeFileName2?.let { finalNeededBadges.add(it) }
             imageData.badgeFileName3?.let { finalNeededBadges.add(it) }
+            imageData.audioFileName?.let { finalNeededAudio.add(it) }
         }
         updatedPresetData.pendingImages.forEach { finalNeededImages.add(it) }
         
@@ -1303,6 +1356,20 @@ class PresetManager(private val context: Context) {
                     exportedBadges++
                 }
             }
+
+            // 写入解说音频到ZIP
+            var exportedAudio = 0
+            finalNeededAudio.forEach { fileName ->
+                val sourceFile = File(workAudioFolder, fileName)
+                if (sourceFile.exists()) {
+                    zipOut.putNextEntry(ZipEntry("$AUDIO_FOLDER_NAME/$fileName"))
+                    FileInputStream(sourceFile).use { input ->
+                        input.copyTo(zipOut)
+                    }
+                    zipOut.closeEntry()
+                    exportedAudio++
+                }
+            }
         }
         
         // 返回更新后的预设数据（包含新的文件名）
@@ -1321,12 +1388,14 @@ class PresetManager(private val context: Context) {
         // 收集所有需要的图片文件名
         val neededImages = mutableSetOf<String>()
         val neededBadges = mutableSetOf<String>()
+        val neededAudio = mutableSetOf<String>()
 
         presetData.tierImages.forEach { imageData ->
             neededImages.add(imageData.imageFileName)
             imageData.badgeFileName1?.let { neededBadges.add(it) }
             imageData.badgeFileName2?.let { neededBadges.add(it) }
             imageData.badgeFileName3?.let { neededBadges.add(it) }
+            imageData.audioFileName?.let { neededAudio.add(it) }
         }
         presetData.pendingImages.forEach { neededImages.add(it) }
         
@@ -1345,6 +1414,8 @@ class PresetManager(private val context: Context) {
         // 检测相同内容的图片，建立内容到文件名的映射
         val workImagesFolder = File(workImagesDir, IMAGES_FOLDER_NAME)
         val workBadgesFolder = File(workImagesDir, BADGES_FOLDER_NAME)
+        val workAudioFolder = File(workImagesDir, AUDIO_FOLDER_NAME)
+        workAudioFolder.mkdirs()
         
         // 图片内容去重: 内容标识 -> 规范文件名
         val imageContentMap = mutableMapOf<String, String>()
@@ -1497,8 +1568,22 @@ class PresetManager(private val context: Context) {
                     exportedBadges++
                 }
             }
+
+            // 写入解说音频到ZIP（保持原文件名）
+            var exportedAudio = 0
+            neededAudio.forEach { fileName ->
+                val sourceFile = File(workAudioFolder, fileName)
+                if (sourceFile.exists()) {
+                    zipOut.putNextEntry(ZipEntry("$AUDIO_FOLDER_NAME/$fileName"))
+                    FileInputStream(sourceFile).use { input ->
+                        input.copyTo(zipOut)
+                    }
+                    zipOut.closeEntry()
+                    exportedAudio++
+                }
+            }
         }
-        
+
         // 注意: 不要重命名工作目录中的文件
         // 因为 createPresetData 每次都会根据URI生成新的随机文件名
         // 重命名会导致后续保存时文件名不一致
@@ -1611,6 +1696,16 @@ class PresetManager(private val context: Context) {
                         tempFile.delete()
                         badgeCount++
                     }
+                    entryName.startsWith("$AUDIO_FOLDER_NAME/") -> {
+                        // 解压音频文件到工作目录，保持原格式
+                        val fileName = entryName.substringAfterLast("/")
+                        val outputFile = File(workImagesDir, "$AUDIO_FOLDER_NAME/$fileName")
+                        outputFile.parentFile?.mkdirs()
+                        outputFile.outputStream().use { output ->
+                            zipIn.copyTo(output)
+                        }
+                        fileNameMapping[fileName] = fileName
+                    }
                 }
                 zipIn.closeEntry()
             }
@@ -1625,7 +1720,8 @@ class PresetManager(private val context: Context) {
                 imageFileName = fileNameMapping[imageData.imageFileName] ?: imageData.imageFileName,
                 badgeFileName1 = imageData.badgeFileName1?.let { fileNameMapping[it] ?: it },
                 badgeFileName2 = imageData.badgeFileName2?.let { fileNameMapping[it] ?: it },
-                badgeFileName3 = imageData.badgeFileName3?.let { fileNameMapping[it] ?: it }
+                badgeFileName3 = imageData.badgeFileName3?.let { fileNameMapping[it] ?: it },
+                audioFileName = imageData.audioFileName?.let { fileNameMapping[it] ?: it }
             )
         }
 
@@ -1704,6 +1800,7 @@ class PresetManager(private val context: Context) {
         val badgeUri: Uri? = null,
         val badgeUri2: Uri? = null,
         val badgeUri3: Uri? = null,
+        val audioUri: Uri? = null,
         // 裁剪状态字段
         val cropPositionX: Float = 0.5f,
         val cropPositionY: Float = 0.5f,
@@ -1831,6 +1928,11 @@ class PresetManager(private val context: Context) {
                 }
             }
 
+            val audioUri = imageData.audioFileName?.let {
+                val audioFile = File(workImagesDir, "$AUDIO_FOLDER_NAME/$it")
+                if (audioFile.exists()) Uri.fromFile(audioFile) else null
+            }
+
             appliedTierImages.add(AppliedTierImage(
                 id = imageData.id,
                 tierLabel = imageData.tierLabel,
@@ -1839,6 +1941,7 @@ class PresetManager(private val context: Context) {
                 badgeUri = badgeUri1,
                 badgeUri2 = badgeUri2,
                 badgeUri3 = badgeUri3,
+                audioUri = audioUri,
                 // 恢复裁剪状态
                 cropPositionX = imageData.cropPositionX,
                 cropPositionY = imageData.cropPositionY,
@@ -1945,6 +2048,7 @@ class PresetManager(private val context: Context) {
             val badgeFileName1 = tierImage.badgeUri?.let { extractFileNameFromUri(it) }
             val badgeFileName2 = tierImage.badgeUri2?.let { extractFileNameFromUri(it) }
             val badgeFileName3 = tierImage.badgeUri3?.let { extractFileNameFromUri(it) }
+            val audioFileName = tierImage.audioUri?.let { extractFileNameFromUri(it) }
 
             if (imageFileName != null) {
                 tierImagesData.add(TierImageData(
@@ -1955,6 +2059,7 @@ class PresetManager(private val context: Context) {
                     badgeFileName1 = badgeFileName1,
                     badgeFileName2 = badgeFileName2,
                     badgeFileName3 = badgeFileName3,
+                    audioFileName = audioFileName,
                     // 保存裁剪状态
                     cropPositionX = tierImage.cropPositionX,
                     cropPositionY = tierImage.cropPositionY,

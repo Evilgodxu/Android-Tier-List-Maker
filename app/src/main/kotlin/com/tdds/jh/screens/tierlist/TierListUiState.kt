@@ -23,6 +23,7 @@ import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.model.tierlist.PresetOperation
+import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 
 // ==================== Parcelable 数据类用于状态保存 ====================
 
@@ -56,12 +57,14 @@ data class TierImageState(
     val name: String?,
     val badgeUriString: String?,
     val badgeUri2String: String?,
-    val badgeUri3String: String?
+    val badgeUri3String: String?,
+    val audioUriString: String? = null
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readString() ?: "",
         parcel.readString() ?: "",
         parcel.readString() ?: "",
+        parcel.readString(),
         parcel.readString(),
         parcel.readString(),
         parcel.readString(),
@@ -78,6 +81,7 @@ data class TierImageState(
         parcel.writeString(badgeUriString)
         parcel.writeString(badgeUri2String)
         parcel.writeString(badgeUri3String)
+        parcel.writeString(audioUriString)
     }
 
     override fun describeContents(): Int = 0
@@ -98,7 +102,8 @@ fun TierImage.toState() = TierImageState(
     name = name.takeIf { it.isNotEmpty() },
     badgeUriString = badgeUri?.toString(),
     badgeUri2String = badgeUri2?.toString(),
-    badgeUri3String = badgeUri3?.toString()
+    badgeUri3String = badgeUri3?.toString(),
+    audioUriString = audioUri?.toString()
 )
 fun TierImageState.toTierImage() = TierImage(
     id = id,
@@ -108,7 +113,8 @@ fun TierImageState.toTierImage() = TierImage(
     badgeUri = badgeUriString?.toUri(),
     badgeUri2 = badgeUri2String?.toUri(),
     badgeUri3 = badgeUri3String?.toUri(),
-    originalUri = originalUriString?.toUri()
+    originalUri = originalUriString?.toUri(),
+    audioUri = audioUriString?.toUri()
 )
 
 /**
@@ -124,7 +130,8 @@ data class TierListSavedState(
     val floatOffsetX: Float,
     val floatOffsetY: Float,
     val externalBadgeEnabled: Boolean,
-    val nameBelowImage: Boolean
+    val nameBelowImage: Boolean,
+    val videoGenerationConfig: VideoGenerationConfig = VideoGenerationConfig()
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.createTypedArrayList(TierItemState.CREATOR) ?: emptyList(),
@@ -136,7 +143,8 @@ data class TierListSavedState(
         parcel.readFloat(),
         parcel.readFloat(),
         parcel.readByte() != 0.toByte(),
-        parcel.readByte() != 0.toByte()
+        parcel.readByte() != 0.toByte(),
+        parcel.readParcelable(VideoGenerationConfig::class.java.classLoader) ?: VideoGenerationConfig()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -150,6 +158,7 @@ data class TierListSavedState(
         parcel.writeFloat(floatOffsetY)
         parcel.writeByte(if (externalBadgeEnabled) 1 else 0)
         parcel.writeByte(if (nameBelowImage) 1 else 0)
+        parcel.writeParcelable(videoGenerationConfig, flags)
     }
 
     override fun describeContents(): Int = 0
@@ -186,6 +195,11 @@ class DialogState {
     var showSettingsMenu by mutableStateOf(false)
     var showProgramSettingsDialog by mutableStateOf(false)
     var showResourceManageDialog by mutableStateOf(false)
+    var showVideoGenerationConfigDialog by mutableStateOf(false)
+    var showImageAudioDialog by mutableStateOf(false)
+    var selectedImageForAudio by mutableStateOf<com.tdds.jh.model.tierlist.TierImage?>(null)
+    var showVideoPreviewDialog by mutableStateOf(false)
+    var showVideoExportDialog by mutableStateOf(false)
 
     // ==================== 信息对话框 ====================
     var showDonateDialog by mutableStateOf(false)

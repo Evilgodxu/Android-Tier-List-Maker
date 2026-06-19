@@ -18,5 +18,6 @@ data class TierImage(
     val cropRatio: Float = 0f,
     val useCustomCrop: Boolean = false,
     val customCropWidth: Int = 0,
-    val customCropHeight: Int = 0
+    val customCropHeight: Int = 0,
+    val audioUri: Uri? = null
 )

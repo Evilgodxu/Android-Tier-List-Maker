@@ -33,7 +33,8 @@ class ImagePickerHandler(
     private val presetManager: PresetManager,
     private val tierImages: SnapshotStateList<TierImage>,
     private val onPendingImagesChange: (List<Uri>) -> Unit,
-    private val onResumeDraftSave: (() -> Unit)?
+    private val onResumeDraftSave: (() -> Unit)?,
+    private val onBadgeAdded: ((tierImageId: String, slotIndex: Int) -> Unit)? = null
 ) {
 
     // ==================== 图片选择器回调处理 ====================
@@ -166,6 +167,7 @@ class ImagePickerHandler(
                                 else -> tierImages[index].copy(badgeUri3 = workUri)
                             }
                             dialogState.imageForBadge = tierImages[index]
+                            onBadgeAdded?.invoke(imageForBadge.id, badgeSelectionTarget - 1)
                         }
                         onBadgeDialogRefresh()
                     } catch (e: Exception) {
@@ -177,6 +179,7 @@ class ImagePickerHandler(
                                 else -> tierImages[index].copy(badgeUri3 = uri)
                             }
                             dialogState.imageForBadge = tierImages[index]
+                            onBadgeAdded?.invoke(imageForBadge.id, badgeSelectionTarget - 1)
                         }
                         onBadgeDialogRefresh()
                     } finally {
@@ -328,7 +331,8 @@ fun rememberImagePickerHandler(
     presetManager: PresetManager,
     tierImages: SnapshotStateList<TierImage>,
     onPendingImagesChange: (List<Uri>) -> Unit,
-    onResumeDraftSave: (() -> Unit)?
+    onResumeDraftSave: (() -> Unit)?,
+    onBadgeAdded: ((tierImageId: String, slotIndex: Int) -> Unit)? = null
 ): ImagePickerHandler {
     val context = LocalContext.current
     return remember(scope, dialogState, presetManager) {
@@ -339,7 +343,8 @@ fun rememberImagePickerHandler(
             presetManager = presetManager,
             tierImages = tierImages,
             onPendingImagesChange = onPendingImagesChange,
-            onResumeDraftSave = onResumeDraftSave
+            onResumeDraftSave = onResumeDraftSave,
+            onBadgeAdded = onBadgeAdded
         )
     }
 }

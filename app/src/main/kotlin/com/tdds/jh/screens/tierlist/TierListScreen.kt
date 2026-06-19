@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.ComponentActivity
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.generateTierListBitmap
@@ -82,6 +84,10 @@ import com.tdds.jh.screens.tierlist.components.PendingImagesSection
 import com.tdds.jh.screens.tierlist.components.SwipeableTierRow
 import com.tdds.jh.screens.tierlist.components.TierListDialogs
 import com.tdds.jh.screens.tierlist.components.ZipPasswordDialog
+import com.tdds.jh.screens.tierlist.components.video.ImageAudioDialog
+import com.tdds.jh.screens.tierlist.components.video.VideoExportDialog
+import com.tdds.jh.screens.tierlist.components.video.VideoGenerationConfigDialog
+import com.tdds.jh.screens.tierlist.components.video.VideoPreviewDialog
 import com.tdds.jh.screens.tierlist.logic.utils.ColorUtils
 import com.tdds.jh.screens.tierlist.logic.utils.ImageOperationUtils
 import com.tdds.jh.screens.tierlist.logic.utils.PermissionUtils
@@ -132,6 +138,33 @@ fun TierListMakerApp(
         onRegisterSaveDraftCallback, onSkipDraftSave, onResumeDraftSave, onExitApp
     )
 
+    val videoExportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("video/mp4")
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val tempFile = File(context.cacheDir, "export_video_${System.currentTimeMillis()}.mp4")
+            vm.dialogState.showVideoExportDialog = true
+            vm.exportVideo(tempFile, isDarkTheme, disableCustomFont) { success, _ ->
+                if (success) {
+                    try {
+                        context.contentResolver.openOutputStream(uri)?.use { output ->
+                            tempFile.inputStream().use { input ->
+                                input.copyTo(output)
+                            }
+                        }
+                        showToastWithoutIcon(context, context.getString(R.string.export_success))
+                    } catch (e: Exception) {
+                        showToastWithoutIcon(context, context.getString(R.string.export_failed, e.message ?: "unknown"))
+                    }
+                } else {
+                    showToastWithoutIcon(context, context.getString(R.string.export_failed, vm.exportErrorMessage ?: "unknown"))
+                }
+                vm.dialogState.showVideoExportDialog = false
+                tempFile.delete()
+            }
+        }
+    }
+
     // 双击返回退出
     BackHandler {
         val currentTime = System.currentTimeMillis()
@@ -156,6 +189,70 @@ fun TierListMakerApp(
     }
     if (vm.dialogState.showDraftLoadingDialog) LoadingDialog(message = stringResource(R.string.loading_resources))
 
+    // 视频生成设置对话框
+    if (vm.dialogState.showVideoGenerationConfigDialog) {
+        VideoGenerationConfigDialog(
+            initialConfig = vm.videoGenerationConfig,
+            onDismiss = { vm.dialogState.showVideoGenerationConfigDialog = false },
+            onConfirm = { config ->
+                vm.videoGenerationConfig = config
+                vm.dialogState.showVideoGenerationConfigDialog = false
+            },
+            onPreview = {
+                vm.dialogState.showVideoGenerationConfigDialog = false
+                vm.dialogState.showVideoPreviewDialog = true
+            },
+            onExport = {
+                vm.dialogState.showVideoGenerationConfigDialog = false
+                videoExportLauncher.launch("video_export.mp4")
+            }
+        )
+    }
+
+    // 视频预览对话框
+    if (vm.dialogState.showVideoPreviewDialog) {
+        VideoPreviewDialog(
+            tiers = vm.tiers,
+            tierImages = vm.tierImages,
+            config = vm.videoGenerationConfig,
+            isDarkTheme = isDarkTheme,
+            disableCustomFont = disableCustomFont,
+            externalBadgeEnabled = vm.externalBadgeEnabled,
+            nameBelowImage = vm.nameBelowImage,
+            title = vm.tierListTitle,
+            authorName = vm.authorName,
+            onDismiss = { vm.dialogState.showVideoPreviewDialog = false }
+        )
+    }
+
+    // 视频导出进度对话框
+    if (vm.dialogState.showVideoExportDialog) {
+        VideoExportDialog(
+            progress = vm.exportProgress,
+            renderedFrames = vm.exportRenderedFrames,
+            totalFrames = vm.exportTotalFrames,
+            onCancel = { vm.exportCancelRequested = true }
+        )
+    }
+
+    // 图片解说音频对话框
+    if (vm.dialogState.showImageAudioDialog && vm.dialogState.selectedImageForAudio != null) {
+        val image = vm.dialogState.selectedImageForAudio!!
+        ImageAudioDialog(
+            hasAudio = image.audioUri != null,
+            onDismiss = { vm.dialogState.showImageAudioDialog = false; vm.dialogState.selectedImageForAudio = null },
+            onUpload = {
+                vm.dialogState.selectedImageForAudio = image
+                vm.audioPickerLauncher.launch("audio/*")
+            },
+            onRemove = {
+                vm.removeImageAudio(image.id)
+                vm.dialogState.showImageAudioDialog = false
+                vm.dialogState.selectedImageForAudio = null
+            }
+        )
+    }
+
     // 竖屏时应用状态栏 insets，横屏时隐藏状态栏不需要 insets
     val topBarInsets = if (!isExpanded) {
         WindowInsets.statusBars
@@ -178,6 +275,11 @@ fun TierListMakerApp(
                     IconButton(onClick = { onThemeChange(!isDarkTheme) }) {
                         Icon(painter = painterResource(id = if (isDarkTheme) R.drawable.ic_sun_light else R.drawable.ic_moon_light),
                             contentDescription = if (isDarkTheme) stringResource(R.string.switch_to_light_theme) else stringResource(R.string.switch_to_dark_theme),
+                            modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
+                    }
+                    IconButton(onClick = { vm.dialogState.showVideoGenerationConfigDialog = true }) {
+                        Icon(imageVector = Icons.Default.PlayArrow,
+                            contentDescription = stringResource(R.string.video_generation),
                             modifier = Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurface)
                     }
                 }
@@ -286,7 +388,9 @@ fun TierListMakerApp(
                 onDragStart = { uri -> vm.isDraggingPendingImage = true; vm.draggedPendingImageUri = uri },
                 onDragEnd = { vm.isDraggingPendingImage = false; vm.draggedPendingImageUri = null },
                 onDropOnTier = { uri, tierLabel ->
-                    vm.tierImages.add(TierImage(UUID.randomUUID().toString(), tierLabel, uri))
+                    val newId = UUID.randomUUID().toString()
+                    vm.tierImages.add(TierImage(newId, tierLabel, uri))
+                    vm.recordImagePlaced(newId, tierLabel)
                     val idx = vm.pendingImages.indexOfFirst { it == uri }
                     if (idx != -1) vm.pendingImages = vm.pendingImages.toMutableList().apply { removeAt(idx) }
                 },
@@ -325,7 +429,9 @@ fun TierListMakerApp(
                             onTierLongClick = {},
                             onTierDoubleClick = { vm.dialogState.editingTier = tier; vm.dialogState.showColorPickerDialog = true },
                             onAddImage = { uri ->
-                                vm.tierImages.add(TierImage(UUID.randomUUID().toString(), tier.label, uri))
+                                val newId = UUID.randomUUID().toString()
+                                vm.tierImages.add(TierImage(newId, tier.label, uri))
+                                vm.recordImagePlaced(newId, tier.label)
                                 val idx = vm.pendingImages.indexOfFirst { it == uri }
                                 if (idx != -1) vm.pendingImages = vm.pendingImages.toMutableList().apply { removeAt(idx) }
                             },
