@@ -108,6 +108,10 @@ android {
             useLegacyPackaging = false
         }
     }
+
+    lint {
+        disable += listOf("MissingTranslation")
+    }
 }
 
 dependencies {

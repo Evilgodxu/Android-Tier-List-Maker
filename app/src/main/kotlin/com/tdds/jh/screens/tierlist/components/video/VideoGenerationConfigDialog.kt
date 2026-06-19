@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
 import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
@@ -63,7 +65,8 @@ fun VideoGenerationConfigDialog(
     onDismiss: () -> Unit,
     onConfigChange: (VideoGenerationConfig) -> Unit,
     onPreview: (() -> Unit)? = null,
-    onExport: (() -> Unit)? = null
+    onExport: (() -> Unit)? = null,
+    onBackgroundMusicPicked: suspend (Uri) -> Uri? = { it }
 ) {
     var config by remember(initialConfig) { mutableStateOf(initialConfig) }
     val extendedColors = LocalExtendedColors.current
@@ -135,7 +138,8 @@ fun VideoGenerationConfigDialog(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     AudioSection(
                         config = config,
-                        onConfigChange = { updateConfig(it) }
+                        onConfigChange = { updateConfig(it) },
+                        onBackgroundMusicPicked = onBackgroundMusicPicked
                     )
                 }
 
@@ -315,9 +319,11 @@ private fun IntervalSection(
 @Composable
 private fun AudioSection(
     config: VideoGenerationConfig,
-    onConfigChange: (VideoGenerationConfig) -> Unit
+    onConfigChange: (VideoGenerationConfig) -> Unit,
+    onBackgroundMusicPicked: suspend (Uri) -> Uri?
 ) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
     val musicPicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             try {
@@ -327,7 +333,10 @@ private fun AudioSection(
                 )
             } catch (_: SecurityException) {
             }
-            onConfigChange(config.copy(backgroundMusicUri = it.toString()))
+            scope.launch {
+                val resolvedUri = onBackgroundMusicPicked(it) ?: it
+                onConfigChange(config.copy(backgroundMusicUri = resolvedUri.toString()))
+            }
         }
     }
 

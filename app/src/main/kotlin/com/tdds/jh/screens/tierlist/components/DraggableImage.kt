@@ -33,6 +33,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -87,8 +88,7 @@ fun DraggableImage(
     val badgeSize = (imageSize.value * 0.22f).dp
     val density = LocalDensity.current
     val imageScope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val configuration = context.resources.configuration
+    val configuration = LocalConfiguration.current
     val screenHeightPx = with(density) { configuration.screenHeightDp.dp.toPx() }
     
     // 记录图片中心点的全局位置

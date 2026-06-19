@@ -5,6 +5,8 @@ import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.net.Uri
+import android.util.Log
+import java.io.File
 import kotlin.math.min
 
 /**
@@ -14,7 +16,14 @@ import kotlin.math.min
  */
 object AudioDecoder {
 
+    private const val TAG = "AudioDecoder"
+
     private const val TIMEOUT_US = 10_000L
+
+    private fun isWavUri(uri: Uri): Boolean {
+        val path = uri.path ?: uri.toString()
+        return path.lowercase().endsWith(".wav")
+    }
 
     /**
      * 解码音频为 PCM
@@ -30,13 +39,19 @@ object AudioDecoder {
         targetChannels: Int = 2,
         maxDurationSeconds: Float? = null
     ): ShortArray? {
+        // WAV 文件使用独立解码器，绕过原生 MediaExtractor 对 WAV 支持不一致的问题
+        if (isWavUri(uri)) {
+            return WavDecoder.decodeToPcm(context, uri, targetSampleRate, targetChannels, maxDurationSeconds)
+        }
+
         val extractor = MediaExtractor()
         try {
             when (uri.scheme) {
-                "file" -> extractor.setDataSource(uri.path!!)
+                "file" -> extractor.setDataSource(File(uri.path!!).absolutePath)
                 else -> extractor.setDataSource(context, uri, null)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "无法设置音频数据源: $uri", e)
             extractor.release()
             return null
         }
@@ -45,6 +60,7 @@ object AudioDecoder {
             extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true
         }
         if (trackIndex == null) {
+            Log.w(TAG, "未找到音频轨道: $uri")
             extractor.release()
             return null
         }
@@ -52,13 +68,17 @@ object AudioDecoder {
         extractor.selectTrack(trackIndex)
         val format = extractor.getTrackFormat(trackIndex)
         val mime = format.getString(MediaFormat.KEY_MIME) ?: run {
+            Log.w(TAG, "无法读取音频 MIME 类型: $uri")
             extractor.release()
             return null
         }
+        val sourceSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
+        val sourceChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
 
         val codec = try {
             MediaCodec.createDecoderByType(mime)
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "无法创建音频解码器 ($mime): $uri", e)
             extractor.release()
             return null
         }
@@ -71,9 +91,6 @@ object AudioDecoder {
         val bufferInfo = MediaCodec.BufferInfo()
         var sawInputEOS = false
         var sawOutputEOS = false
-
-        val sourceSampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
-        val sourceChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
 
         val maxSamples = maxDurationSeconds?.let { seconds ->
             (seconds * targetSampleRate * targetChannels).toInt()
@@ -128,9 +145,11 @@ object AudioDecoder {
                     }
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            Log.w(TAG, "音频解码过程异常: $uri", e)
             return null
-        } catch (_: OutOfMemoryError) {
+        } catch (e: OutOfMemoryError) {
+            Log.w(TAG, "音频解码内存不足: $uri", e)
             return null
         } finally {
             codec.stop()

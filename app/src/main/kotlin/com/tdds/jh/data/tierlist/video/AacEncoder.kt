@@ -53,7 +53,8 @@ class AacEncoder(
         var audioTrackIndex = -1
         var presentationTimeUs = 0L
         val bytesPerSample = 2
-        val frameBytes = 1024 * channels * bytesPerSample
+        val samplesPerFrame = 1024 * channels
+        val frameBytes = samplesPerFrame * bytesPerSample
         val inputBufferSize = frameBytes
 
         var inputDone = false
@@ -68,13 +69,18 @@ class AacEncoder(
                         val inputBuffer = codec.getInputBuffer(inputBufferId) ?: continue
                         inputBuffer.clear()
 
-                        val samplesToRead = minOf(inputBufferSize / bytesPerSample, pcmData.size - inputIndex)
-                        if (samplesToRead > 0) {
+                        val remainingSamples = pcmData.size - inputIndex
+                        if (remainingSamples > 0) {
+                            val samplesToRead = minOf(samplesPerFrame, remainingSamples)
                             for (i in 0 until samplesToRead) {
                                 inputBuffer.putShort(pcmData[inputIndex + i])
                             }
+                            // AAC 要求每帧固定 1024 个样本/通道，最后一帧不足时补 0
+                            for (i in samplesToRead until samplesPerFrame) {
+                                inputBuffer.putShort(0)
+                            }
                             val sampleTimeUs = (inputIndex.toDouble() / channels / sampleRate * 1_000_000).toLong()
-                            codec.queueInputBuffer(inputBufferId, 0, samplesToRead * bytesPerSample, sampleTimeUs, 0)
+                            codec.queueInputBuffer(inputBufferId, 0, samplesPerFrame * bytesPerSample, sampleTimeUs, 0)
                             inputIndex += samplesToRead
                         } else {
                             codec.queueInputBuffer(inputBufferId, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)

@@ -2,6 +2,7 @@ package com.tdds.jh.data.tierlist.video
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.core.net.toUri
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.model.tierlist.video.timeline.Timeline
@@ -32,12 +33,14 @@ class AudioMixer(private val context: Context) {
         val channels = CHANNELS
         val totalDuration = timeline.totalDuration
         if (totalDuration <= 0f) {
+            Log.w(TAG, "混音失败: 总时长 <= 0")
             progressCallback(1f)
             return@withContext false
         }
 
         val totalSamples = (totalDuration * sampleRate * channels).toLong()
         if (totalSamples > Int.MAX_VALUE) {
+            Log.w(TAG, "混音失败: 总样本数超过 Int.MAX_VALUE")
             progressCallback(1f)
             return@withContext false
         }
@@ -94,7 +97,11 @@ class AudioMixer(private val context: Context) {
         }
         val bgmUri = bgmUriString.toUri()
         val pcm = AudioDecoder.decodeToPcm(context, bgmUri, sampleRate, channels, maxDurationSeconds = totalDuration)
-        if (pcm != null && pcm.isNotEmpty()) {
+        if (pcm == null) {
+            Log.w(TAG, "背景音乐解码失败，将忽略该音轨: $bgmUriString")
+        } else if (pcm.isEmpty()) {
+            Log.w(TAG, "背景音乐解码结果为空，将忽略该音轨: $bgmUriString")
+        } else {
             mixLoopPcm(mixBuffer, pcm, 0, config.backgroundMusicVolume)
         }
         progressCallback(0.6f)
@@ -120,5 +127,6 @@ class AudioMixer(private val context: Context) {
     companion object {
         const val SAMPLE_RATE = 44100
         const val CHANNELS = 2
+        private const val TAG = "AudioMixer"
     }
 }

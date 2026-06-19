@@ -55,6 +55,7 @@ import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -156,7 +157,7 @@ fun ReorderableCollectionItemScope.SwipeableTierRow(
     )
 
     // 获取屏幕宽高计算滑动阈值和自动滚动
-    val configuration = LocalContext.current.resources.configuration
+    val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val screenHeight = configuration.screenHeightDp.dp
     val maxDragDistance = screenWidth.value * 0.75f // 最大滑动距离为屏幕宽度的75%

@@ -279,7 +279,7 @@ class VideoEncoder(
             info.offset = 0
             info.size = sampleSize
             info.presentationTimeUs = extractor.sampleTime
-            info.flags = extractor.sampleFlags
+            info.flags = mapExtractorFlagsToBufferFlags(extractor.sampleFlags)
             muxer.writeSampleData(audioTrackIndex, buffer, info)
             extractor.advance()
         }
@@ -299,10 +299,21 @@ class VideoEncoder(
             info.offset = 0
             info.size = sampleSize
             info.presentationTimeUs = extractor.sampleTime
-            info.flags = extractor.sampleFlags
+            info.flags = mapExtractorFlagsToBufferFlags(extractor.sampleFlags)
             muxer.writeSampleData(audioTrackIndex, buffer, info)
             extractor.advance()
         }
+    }
+
+    private fun mapExtractorFlagsToBufferFlags(extractorFlags: Int): Int {
+        var flags = 0
+        if (extractorFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) {
+            flags = flags or MediaCodec.BUFFER_FLAG_KEY_FRAME
+        }
+        if (extractorFlags and MediaExtractor.SAMPLE_FLAG_PARTIAL_FRAME != 0) {
+            flags = flags or MediaCodec.BUFFER_FLAG_PARTIAL_FRAME
+        }
+        return flags
     }
 
     private data class AudioExtractorWrapper(

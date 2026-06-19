@@ -3,7 +3,7 @@ package com.tdds.jh.screens.tierlist.components
 import android.graphics.Rect
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -80,8 +80,8 @@ fun PendingImagesSection(
     var dragPosition by remember { mutableStateOf(Offset.Zero) }
     var currentDropTarget by remember { mutableStateOf<String?>(null) }
 
-    // 使用 BoxWithConstraints 获取父容器尺寸
-    BoxWithConstraints(
+    // 使用 Box 包裹内容
+    Box(
         modifier = Modifier.fillMaxWidth()
     ) {
         val extendedColors = LocalExtendedColors.current

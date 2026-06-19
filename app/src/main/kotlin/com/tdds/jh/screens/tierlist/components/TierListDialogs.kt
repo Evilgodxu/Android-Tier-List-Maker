@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -1319,25 +1320,28 @@ private fun PresetOverwriteConfirmDialog(
         }
     } else {
         dialogState.showPresetOverwriteConfirmDialog = false
-        dialogState.isSavingPreset = true
-        scope.launch {
-            kotlinx.coroutines.yield()
+        LaunchedEffect(Unit) {
+            dialogState.isSavingPreset = true
             try {
-                val presetData = presetManager.createPresetData(
-                    title = dialogState.pendingPresetName,
-                    author = authorName,
-                    tiers = tiers,
-                    tierImages = tierImages,
-                    pendingImages = pendingImages,
-                    cropPositionX = settingsService.cropPositionX,
-                    cropPositionY = settingsService.cropPositionY,
-                    customCropWidth = settingsService.customCropWidth,
-                    customCropHeight = settingsService.customCropHeight,
-                    useCustomCropSize = settingsService.useCustomCropSize,
-                    cropRatio = settingsService.cropRatio,
-                    videoConfig = videoConfig
-                )
-                presetManager.savePreset(dialogState.pendingPresetName, presetData)
+                val presetData = withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    presetManager.createPresetData(
+                        title = dialogState.pendingPresetName,
+                        author = authorName,
+                        tiers = tiers,
+                        tierImages = tierImages,
+                        pendingImages = pendingImages,
+                        cropPositionX = settingsService.cropPositionX,
+                        cropPositionY = settingsService.cropPositionY,
+                        customCropWidth = settingsService.customCropWidth,
+                        customCropHeight = settingsService.customCropHeight,
+                        useCustomCropSize = settingsService.useCustomCropSize,
+                        cropRatio = settingsService.cropRatio,
+                        videoConfig = videoConfig
+                    )
+                }
+                withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    presetManager.savePreset(dialogState.pendingPresetName, presetData)
+                }
 
                 showToastWithoutIcon(context, context.getString(R.string.preset_save_success))
             } catch (e: Exception) {

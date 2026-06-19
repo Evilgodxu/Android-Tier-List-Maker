@@ -62,7 +62,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -124,8 +123,10 @@ fun TierListMakerApp(
     onExitApp: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
-    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
+    val exportSuccessText = stringResource(R.string.export_success)
+    val exportFailedText = stringResource(R.string.export_failed)
+    val resetSuccessText = stringResource(R.string.reset_success)
     val extendedColors = LocalExtendedColors.current
     val windowSizeClass = rememberWindowSizeClass()
     val isExpanded = windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
@@ -151,12 +152,12 @@ fun TierListMakerApp(
                                 input.copyTo(output)
                             }
                         }
-                        showToastWithoutIcon(context, context.getString(R.string.export_success))
+                        showToastWithoutIcon(context, exportSuccessText)
                     } catch (e: Exception) {
-                        showToastWithoutIcon(context, context.getString(R.string.export_failed, e.message ?: "unknown"))
+                        showToastWithoutIcon(context, String.format(exportFailedText, e.message ?: "unknown"))
                     }
                 } else {
-                    showToastWithoutIcon(context, context.getString(R.string.export_failed, vm.exportErrorMessage ?: "unknown"))
+                    showToastWithoutIcon(context, String.format(exportFailedText, vm.exportErrorMessage ?: "unknown"))
                 }
                 vm.dialogState.showVideoExportDialog = false
                 tempFile.delete()
@@ -201,6 +202,9 @@ fun TierListMakerApp(
             onExport = {
                 vm.dialogState.showVideoGenerationConfigDialog = false
                 videoExportLauncher.launch("video_export.mp4")
+            },
+            onBackgroundMusicPicked = { uri ->
+                vm.presetManager.copyAudioUriToWorkDir(uri)
             }
         )
     }
@@ -315,7 +319,7 @@ fun TierListMakerApp(
                             if (vm.dialogState.isResetting || vm.isDefaultState()) return@OutlinedButton
                             vm.dialogState.isResetting = true
                             vm.resetTierList()
-                            showToastWithoutIcon(context, context.getString(R.string.reset_success))
+                            showToastWithoutIcon(context, resetSuccessText)
                             scope.launch { delay(500); vm.dialogState.isResetting = false }
                         },
                         modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp),
@@ -350,7 +354,7 @@ fun TierListMakerApp(
                         if (vm.dialogState.isResetting || vm.isDefaultState()) return@OutlinedButton
                         vm.dialogState.isResetting = true
                         vm.resetTierList()
-                        showToastWithoutIcon(context, context.getString(R.string.reset_success))
+                        showToastWithoutIcon(context, resetSuccessText)
                         scope.launch { delay(500); vm.dialogState.isResetting = false }
                     },
                     modifier = Modifier.weight(1f).height(48.dp), shape = RoundedCornerShape(12.dp),

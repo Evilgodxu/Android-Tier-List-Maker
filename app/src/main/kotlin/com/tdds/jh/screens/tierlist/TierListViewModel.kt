@@ -28,7 +28,9 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.PresetData
@@ -298,10 +300,13 @@ fun rememberTierListViewModel(
     onExitApp: (() -> Unit)?,
 ): TierListViewModel {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val defaultTitle = stringResource(R.string.default_title)
+    val audioAddedText = stringResource(R.string.audio_added)
     val scope = rememberCoroutineScope()
     val settingsService = remember { SettingsService(context) }
     val presetManager = remember { PresetManager(context) }
-    val defaultTiers = TierListConfig.getDefaultTiers(context.resources.configuration.locales[0].language == "zh")
+    val defaultTiers = TierListConfig.getDefaultTiers(configuration.locales[0].language == "zh")
 
     // 使用 rememberSaveable 保存和恢复状态
     var savedState by rememberSaveable(stateSaver = TierListSavedStateSaver) {
@@ -395,7 +400,7 @@ fun rememberTierListViewModel(
     LaunchedEffect(Unit) {
         if (vm.skipDraftRestore) return@LaunchedEffect
         if (presetManager.hasDraft()) {
-            if (!hasContent(context.getString(R.string.default_title))) {
+            if (!hasContent(defaultTitle)) {
                 val draftConfig = presetManager.readDraftConfig()
                 if (draftConfig != null) { vm.draftConfigData = draftConfig; vm.dialogState.showDraftRestoreDialog = true }
             } else presetManager.cleanupDraft()
@@ -405,7 +410,7 @@ fun rememberTierListViewModel(
     // ==================== 草稿保存注册 ====================
     DisposableEffect(Unit) {
         val saveDraft: () -> Unit = {
-            if (hasContent(context.getString(R.string.default_title)))
+            if (hasContent(defaultTitle))
                 scope.launch { vm.presetOperationHandler.saveDraft(vm.tierListTitle, vm.authorName, vm.pendingImages, vm.videoGenerationConfig) }
             else presetManager.cleanupDraft()
         }
@@ -433,7 +438,7 @@ fun rememberTierListViewModel(
                 val fileUri = withContext(Dispatchers.IO) { presetManager.copyAudioUriToWorkDir(uri) }
                 if (fileUri != null) {
                     vm.setImageAudio(imageId, fileUri)
-                    showToastWithoutIcon(context, context.getString(R.string.audio_added))
+                    showToastWithoutIcon(context, audioAddedText)
                 } else {
                     showToastWithoutIcon(context, "音频添加失败")
                 }
