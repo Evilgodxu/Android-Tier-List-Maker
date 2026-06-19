@@ -6,6 +6,7 @@ import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
+import com.tdds.jh.model.tierlist.video.NarrationOrder
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import kotlin.math.max
@@ -25,14 +26,14 @@ class TimelineBuilder(
      */
     fun build(tiers: List<TierItem>, tierImages: List<TierImage>): Timeline {
         val actions = mutableListOf<TimelineAction>()
-        var currentTime = 0f
+        val audioSegments = mutableListOf<AudioSegment>()
+        var currentTime = config.initialPauseSeconds
 
         when (config.granularity) {
-            ArrangementGranularity.PER_IMAGE -> buildPerImage(tierImages, actions, currentTime)
-            ArrangementGranularity.PER_TYPE -> buildPerType(tiers, tierImages, actions, currentTime)
+            ArrangementGranularity.PER_IMAGE -> buildPerImage(tierImages, actions, audioSegments, currentTime)
+            ArrangementGranularity.PER_TYPE -> buildPerType(tiers, tierImages, actions, audioSegments, currentTime)
         }
 
-        val audioSegments = buildAudioSegments(tierImages, actions)
         val maxActionEnd = actions.maxOfOrNull { it.endTime } ?: 0f
         val maxAudioEnd = audioSegments.maxOfOrNull { it.startTime + it.duration } ?: 0f
         val totalDuration = maxOf(maxActionEnd, maxAudioEnd)
@@ -43,46 +44,86 @@ class TimelineBuilder(
     private fun buildPerImage(
         tierImages: List<TierImage>,
         actions: MutableList<TimelineAction>,
+        audioSegments: MutableList<AudioSegment>,
         initialTime: Float
     ): Float {
-        return buildSequentialImages(tierImages, actions, initialTime)
+        return buildSequentialImages(tierImages, actions, audioSegments, initialTime)
     }
 
     private fun buildPerType(
         tiers: List<TierItem>,
         tierImages: List<TierImage>,
         actions: MutableList<TimelineAction>,
+        audioSegments: MutableList<AudioSegment>,
         initialTime: Float
     ): Float {
         var currentTime = initialTime
         tiers.forEach { tier ->
             val imagesInTier = tierImages.filter { it.tierLabel == tier.label }
-            currentTime = buildSequentialImages(imagesInTier, actions, currentTime)
+            currentTime = buildSequentialImages(imagesInTier, actions, audioSegments, currentTime)
         }
         return currentTime
     }
 
     /**
-     * 逐张播放图片：单张图片的所有动作（以及解说音频）全部完成后，再切换到下一张。
+     * 逐张播放图片：单张图片的 Place、内容动作与解说音频全部完成后，再切换到下一张。
      */
     private fun buildSequentialImages(
         images: List<TierImage>,
         actions: MutableList<TimelineAction>,
+        audioSegments: MutableList<AudioSegment>,
         initialTime: Float
     ): Float {
         var currentTime = initialTime
         images.forEach { image ->
             val imageStartTime = currentTime
-            config.actionOrder.forEachIndexed { typeIndex, actionType ->
-                if (typeIndex > 0) {
-                    currentTime += config.crossTypePause
+
+            // 图片先放置，保证后续音频/动作都有画面
+            actions.add(TimelineAction.Place(image.id, imageStartTime, PLACE_DURATION, image.tierLabel))
+
+            val audioDuration = image.audioUri?.let { audioDurationProvider.getDurationSeconds(it) } ?: 0f
+            val contentTypes = config.actionOrder.filter { it != VideoActionType.PLACE }
+            val contentDuration = contentTypes.totalContentDuration(image)
+
+            val contentStart: Float
+            val audioStart: Float
+
+            if (audioDuration > 0f) {
+                if (config.narrationOrder == NarrationOrder.BEFORE_CONTENT) {
+                    // 先放解说，再放内容动作
+                    audioStart = imageStartTime + PLACE_DURATION
+                    contentStart = audioStart + audioDuration + config.extraAudioOffset
+                } else {
+                    // 先放内容动作，后放解说
+                    contentStart = imageStartTime + PLACE_DURATION
+                    audioStart = contentStart + contentDuration + config.extraAudioOffset
                 }
-                val imageActions = createActionsForImageAndType(image, actionType, currentTime)
-                actions.addAll(imageActions)
-                currentTime += imageActions.totalDuration()
+                audioSegments.add(AudioSegment(image.id, image.audioUri!!, audioStart, audioDuration))
+            } else {
+                contentStart = imageStartTime + PLACE_DURATION
+                audioStart = contentStart + contentDuration
             }
-            // 当前图片至少展示到解说音频完整播放完毕，才能切换到下一张
-            currentTime = max(currentTime, imageStartTime + imageIntervalFor(image))
+
+            // 添加内容动作
+            var contentCursor = contentStart
+            contentTypes.forEachIndexed { index, actionType ->
+                if (index > 0) {
+                    contentCursor += config.crossTypePause
+                }
+                val typeActions = createActionsForImageAndType(image, actionType, contentCursor)
+                actions.addAll(typeActions)
+                contentCursor += typeActions.totalDuration()
+            }
+
+            val contentEnd = contentStart + contentDuration
+            val audioEnd = audioStart + audioDuration
+            val minImageDuration = if (audioDuration > 0f) {
+                audioDuration + contentDuration + config.extraAudioOffset
+            } else {
+                minImageIntervalWithoutAudio()
+            }
+
+            currentTime = maxOf(contentEnd, audioEnd, imageStartTime + minImageDuration) + config.crossImagePause
         }
         return currentTime
     }
@@ -123,33 +164,30 @@ class TimelineBuilder(
         }
     }
 
-    private fun imageIntervalFor(image: TierImage): Float {
-        val base = when (config.imageIntervalSource) {
-            AudioIntervalSource.AUDIO_DURATION -> {
-                image.audioUri?.let { audioDurationProvider.getDurationSeconds(it) }
-                    ?: config.fixedImageInterval
+    private fun List<VideoActionType>.totalContentDuration(image: TierImage): Float {
+        var duration = 0f
+        forEachIndexed { index, actionType ->
+            if (index > 0) duration += config.crossTypePause
+            duration += when (actionType) {
+                VideoActionType.PLACE -> PLACE_DURATION
+                VideoActionType.NAME -> if (image.name.isBlank()) 0f else when (config.nameDisplayMode) {
+                    NameDisplayMode.ONCE -> NAME_ONCE_DURATION
+                    NameDisplayMode.PER_CHAR -> image.name.length * config.nameCharInterval
+                }
+                VideoActionType.BADGE -> {
+                    val badgeCount = listOfNotNull(image.badgeUri, image.badgeUri2, image.badgeUri3).size
+                    if (badgeCount > 0) (badgeCount - 1) * config.badgeInterval + BADGE_DURATION else 0f
+                }
             }
-
-            AudioIntervalSource.FIXED -> config.fixedImageInterval
         }
-        return base + config.extraAudioOffset + config.crossImagePause
+        return duration
     }
 
-    private fun buildAudioSegments(
-        tierImages: List<TierImage>,
-        actions: List<TimelineAction>
-    ): List<AudioSegment> {
-        val placeActions = actions.filterIsInstance<TimelineAction.Place>()
-        val segments = mutableListOf<AudioSegment>()
-        tierImages.forEach { image ->
-            val uri = image.audioUri ?: return@forEach
-            val place = placeActions.find { it.tierImageId == image.id } ?: return@forEach
-            val duration = audioDurationProvider.getDurationSeconds(uri)
-            if (duration > 0f) {
-                segments.add(AudioSegment(image.id, uri, place.startTime, duration))
-            }
+    private fun minImageIntervalWithoutAudio(): Float {
+        return when (config.imageIntervalSource) {
+            AudioIntervalSource.AUDIO_DURATION,
+            AudioIntervalSource.FIXED -> config.fixedImageInterval
         }
-        return segments
     }
 
     private fun List<TimelineAction>.totalDuration(): Float {

@@ -90,14 +90,18 @@ class VideoExporter(private val context: Context) {
         }
 
         val audioFile = File(context.cacheDir, "export_audio_${System.currentTimeMillis()}.mp4")
-        val audioSuccess = AudioMixer(context).mix(
-            timeline = timeline,
-            config = config,
-            outputFile = audioFile,
-            progressCallback = { progress ->
-                onProgress(0.2f * progress, 0, 0)
-            }
-        )
+        val audioSuccess = try {
+            AudioMixer(context).mix(
+                timeline = timeline,
+                config = config,
+                outputFile = audioFile,
+                progressCallback = { progress ->
+                    onProgress(0.2f * progress, 0, 0)
+                }
+            )
+        } catch (_: Throwable) {
+            false
+        }
 
         if (onCancel()) {
             audioFile.delete()

@@ -53,6 +53,12 @@ data class VideoGenerationConfig(
     /** 动作音效音量 0~1 */
     val sfxVolume: Float = 0.6f,
 
+    /** 解说音频播放顺序 */
+    val narrationOrder: NarrationOrder = NarrationOrder.AFTER_CONTENT,
+
+    /** 视频开头空白时长（秒），用于展示空榜单后再放置第一张图片 */
+    val initialPauseSeconds: Float = 0.5f,
+
     /** 输出宽度 */
     val outputWidth: Int = 1920,
 
@@ -78,6 +84,8 @@ data class VideoGenerationConfig(
         backgroundMusicVolume = parcel.readFloat(),
         narrationVolume = parcel.readFloat(),
         sfxVolume = parcel.readFloat(),
+        narrationOrder = NarrationOrder.entries[parcel.readInt()],
+        initialPauseSeconds = parcel.readFloat(),
         outputWidth = parcel.readInt(),
         outputHeight = parcel.readInt()
     )
@@ -98,6 +106,8 @@ data class VideoGenerationConfig(
         parcel.writeFloat(backgroundMusicVolume)
         parcel.writeFloat(narrationVolume)
         parcel.writeFloat(sfxVolume)
+        parcel.writeInt(narrationOrder.ordinal)
+        parcel.writeFloat(initialPauseSeconds)
         parcel.writeInt(outputWidth)
         parcel.writeInt(outputHeight)
     }

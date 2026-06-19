@@ -27,11 +27,15 @@ object AudioDecoder {
         context: Context,
         uri: Uri,
         targetSampleRate: Int = 44100,
-        targetChannels: Int = 2
+        targetChannels: Int = 2,
+        maxDurationSeconds: Float? = null
     ): ShortArray? {
         val extractor = MediaExtractor()
         try {
-            extractor.setDataSource(context, uri, null)
+            when (uri.scheme) {
+                "file" -> extractor.setDataSource(uri.path!!)
+                else -> extractor.setDataSource(context, uri, null)
+            }
         } catch (_: Exception) {
             extractor.release()
             return null
@@ -106,6 +110,13 @@ object AudioDecoder {
                             targetChannels
                         )
                         samples.addAll(resampled.toList())
+
+                        val maxSamples = maxDurationSeconds?.let { seconds ->
+                            (seconds * targetSampleRate * targetChannels).toInt()
+                        }
+                        if (maxSamples != null && samples.size >= maxSamples) {
+                            sawOutputEOS = true
+                        }
 
                         codec.releaseOutputBuffer(outputBufferIndex, false)
                         if (bufferInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) {

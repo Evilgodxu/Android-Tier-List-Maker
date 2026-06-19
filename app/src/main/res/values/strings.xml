@@ -257,6 +257,9 @@
     <string name="audio_overlay_replace">仅保留音频，静音动作音效</string>
     <string name="background_music">背景音乐</string>
     <string name="add_background_music">添加背景音乐</string>
+    <string name="narration_order">解说播放顺序</string>
+    <string name="narration_before_content">先播放解说</string>
+    <string name="narration_after_content">后播放解说</string>
     <string name="narration_volume">解说音量</string>
     <string name="remove">移除</string>
     <string name="sfx_volume">动作音效音量</string>

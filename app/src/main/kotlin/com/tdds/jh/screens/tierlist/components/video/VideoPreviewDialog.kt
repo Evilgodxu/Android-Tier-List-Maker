@@ -142,7 +142,7 @@ fun VideoPreviewDialog(
                 keyFrames = renderedFrames
                 isLoading = false
                 loadingProgress = 1f
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 errorMessage = e.message
                 isLoading = false
             }

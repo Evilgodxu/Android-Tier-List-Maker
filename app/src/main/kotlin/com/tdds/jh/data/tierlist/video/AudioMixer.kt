@@ -45,7 +45,7 @@ class AudioMixer(private val context: Context) {
         val mixBuffer = IntArray(totalSamples.toInt())
 
         mixNarration(timeline, config, mixBuffer, sampleRate, channels, progressCallback)
-        mixBackgroundMusic(config, mixBuffer, sampleRate, channels, progressCallback)
+        mixBackgroundMusic(config, mixBuffer, sampleRate, channels, totalDuration, progressCallback)
         progressCallback(0.9f)
 
         val finalPcm = ShortArray(mixBuffer.size) { i ->
@@ -84,6 +84,7 @@ class AudioMixer(private val context: Context) {
         mixBuffer: IntArray,
         sampleRate: Int,
         channels: Int,
+        totalDuration: Float,
         progressCallback: (Float) -> Unit
     ) {
         val bgmUriString = config.backgroundMusicUri
@@ -92,7 +93,7 @@ class AudioMixer(private val context: Context) {
             return
         }
         val bgmUri = bgmUriString.toUri()
-        val pcm = AudioDecoder.decodeToPcm(context, bgmUri, sampleRate, channels)
+        val pcm = AudioDecoder.decodeToPcm(context, bgmUri, sampleRate, channels, maxDurationSeconds = totalDuration)
         if (pcm != null && pcm.isNotEmpty()) {
             mixLoopPcm(mixBuffer, pcm, 0, config.backgroundMusicVolume)
         }

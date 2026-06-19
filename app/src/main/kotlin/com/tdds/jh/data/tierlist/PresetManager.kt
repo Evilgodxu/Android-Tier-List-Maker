@@ -17,6 +17,7 @@ import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
 import com.tdds.jh.model.tierlist.video.AudioOverlayMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
+import com.tdds.jh.model.tierlist.video.NarrationOrder
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.screens.tierlist.logic.utils.WebPConverter
@@ -1144,6 +1145,8 @@ class PresetManager(private val context: Context) {
             put("backgroundMusicVolume", config.backgroundMusicVolume.toDouble())
             put("narrationVolume", config.narrationVolume.toDouble())
             put("sfxVolume", config.sfxVolume.toDouble())
+            put("narrationOrder", config.narrationOrder.name)
+            put("initialPauseSeconds", config.initialPauseSeconds.toDouble())
             put("outputWidth", config.outputWidth)
             put("outputHeight", config.outputHeight)
         }
@@ -1178,6 +1181,12 @@ class PresetManager(private val context: Context) {
                 backgroundMusicVolume = json.getDouble("backgroundMusicVolume").toFloat(),
                 narrationVolume = json.getDouble("narrationVolume").toFloat(),
                 sfxVolume = json.getDouble("sfxVolume").toFloat(),
+                narrationOrder = try {
+                    NarrationOrder.valueOf(json.optString("narrationOrder", "AFTER_CONTENT"))
+                } catch (_: Exception) {
+                    NarrationOrder.AFTER_CONTENT
+                },
+                initialPauseSeconds = json.optDouble("initialPauseSeconds", 0.5).toFloat(),
                 outputWidth = json.getInt("outputWidth"),
                 outputHeight = json.getInt("outputHeight")
             )

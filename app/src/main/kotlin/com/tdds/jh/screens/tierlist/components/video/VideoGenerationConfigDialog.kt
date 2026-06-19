@@ -49,6 +49,7 @@ import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
+import com.tdds.jh.model.tierlist.video.NarrationOrder
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.ui.theme.LocalExtendedColors
@@ -335,6 +336,7 @@ private fun AudioSection(
     BackgroundMusicRow(
         uriString = config.backgroundMusicUri,
         onAdd = { musicPicker.launch("audio/*") },
+        onReplace = { musicPicker.launch("audio/*") },
         onRemove = { onConfigChange(config.copy(backgroundMusicUri = null)) }
     )
 
@@ -353,12 +355,27 @@ private fun AudioSection(
         valueFormatter = { String.format("%.0f%%", it * 100) },
         onValueChange = { onConfigChange(config.copy(backgroundMusicVolume = it)) }
     )
+
+    Text(stringResource(R.string.narration_order), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(top = 8.dp))
+    NarrationOrder.entries.forEach { order ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onConfigChange(config.copy(narrationOrder = order)) }
+                .padding(vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            RadioButton(selected = config.narrationOrder == order, onClick = { onConfigChange(config.copy(narrationOrder = order)) })
+            Text(stringResource(order.labelRes), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+        }
+    }
 }
 
 @Composable
 private fun BackgroundMusicRow(
     uriString: String?,
     onAdd: () -> Unit,
+    onReplace: () -> Unit,
     onRemove: () -> Unit
 ) {
     Row(
@@ -375,7 +392,16 @@ private fun BackgroundMusicRow(
             }
         } else {
             val name = runCatching { Uri.parse(uriString).lastPathSegment?.substringAfterLast('/') }.getOrNull() ?: uriString
-            Text(name, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+            Text(
+                name,
+                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
+            TextButton(onClick = onReplace) {
+                Text(stringResource(R.string.replace))
+            }
             TextButton(onClick = onRemove) {
                 Text(stringResource(R.string.remove))
             }
