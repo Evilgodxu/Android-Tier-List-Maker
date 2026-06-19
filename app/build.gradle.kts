@@ -43,7 +43,6 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            isCrunchPngs = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -53,10 +52,6 @@ android {
         debug {
             isMinifyEnabled = false
             isShrinkResources = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-            )
         }
     }
     compileOptions {
