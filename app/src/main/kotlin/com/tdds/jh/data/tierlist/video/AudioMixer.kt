@@ -1,9 +1,7 @@
 package com.tdds.jh.data.tierlist.video
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
-import androidx.core.net.toUri
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.model.tierlist.video.timeline.Timeline
 import com.tdds.jh.model.tierlist.video.timeline.TimelineAction
@@ -48,7 +46,7 @@ class AudioMixer(private val context: Context) {
         val mixBuffer = IntArray(totalSamples.toInt())
 
         mixNarration(timeline, config, mixBuffer, sampleRate, channels, progressCallback)
-        mixBackgroundMusic(config, mixBuffer, sampleRate, channels, totalDuration, progressCallback)
+        progressCallback(0.6f)
         progressCallback(0.9f)
 
         val finalPcm = ShortArray(mixBuffer.size) { i ->
@@ -82,45 +80,12 @@ class AudioMixer(private val context: Context) {
         }
     }
 
-    private suspend fun mixBackgroundMusic(
-        config: VideoGenerationConfig,
-        mixBuffer: IntArray,
-        sampleRate: Int,
-        channels: Int,
-        totalDuration: Float,
-        progressCallback: (Float) -> Unit
-    ) {
-        val bgmUriString = config.backgroundMusicUri
-        if (bgmUriString.isNullOrBlank() || config.backgroundMusicVolume <= 0f) {
-            progressCallback(0.6f)
-            return
-        }
-        val bgmUri = bgmUriString.toUri()
-        val pcm = AudioDecoder.decodeToPcm(context, bgmUri, sampleRate, channels, maxDurationSeconds = totalDuration)
-        if (pcm == null) {
-            Log.w(TAG, "背景音乐解码失败，将忽略该音轨: $bgmUriString")
-        } else if (pcm.isEmpty()) {
-            Log.w(TAG, "背景音乐解码结果为空，将忽略该音轨: $bgmUriString")
-        } else {
-            mixLoopPcm(mixBuffer, pcm, 0, config.backgroundMusicVolume)
-        }
-        progressCallback(0.6f)
-    }
-
     private fun mixPcm(mixBuffer: IntArray, pcm: ShortArray, startSample: Int, volume: Float) {
         if (volume <= 0f) return
         for (i in pcm.indices) {
             val targetIndex = startSample + i
             if (targetIndex < 0 || targetIndex >= mixBuffer.size) continue
             mixBuffer[targetIndex] += (pcm[i] * volume).toInt()
-        }
-    }
-
-    private fun mixLoopPcm(mixBuffer: IntArray, pcm: ShortArray, startSample: Int, volume: Float) {
-        if (pcm.isEmpty() || volume <= 0f) return
-        for (targetIndex in mixBuffer.indices) {
-            val sourceIndex = (targetIndex - startSample).mod(pcm.size)
-            mixBuffer[targetIndex] += (pcm[sourceIndex] * volume).toInt()
         }
     }
 
