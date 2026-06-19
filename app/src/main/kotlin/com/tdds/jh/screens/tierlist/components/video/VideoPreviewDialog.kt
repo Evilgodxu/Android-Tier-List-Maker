@@ -103,7 +103,7 @@ fun VideoPreviewDialog(
                 val timeline = TimelineBuilder(
                     previewConfig,
                     AudioDurationProvider(context)
-                ).build(tierImages)
+                ).build(tiers, tierImages)
 
                 val frames = FrameSequenceGenerator().generateKeyFrames(timeline, previewConfig)
                 val renderer = BitmapFrameRenderer(context)

@@ -14,9 +14,6 @@ data class VideoGenerationConfig(
     /** 编排粒度 */
     val granularity: ArrangementGranularity = ArrangementGranularity.PER_IMAGE,
 
-    /** 混合模式下每个动作类型的执行方式 */
-    val mixedGranularity: Map<VideoActionType, GranularityMode> = VideoActionType.entries.associateWith { GranularityMode.PER_IMAGE },
-
     /** 图片间隔来源 */
     val imageIntervalSource: AudioIntervalSource = AudioIntervalSource.AUDIO_DURATION,
 
@@ -68,15 +65,6 @@ data class VideoGenerationConfig(
             parcel.readList(this, VideoActionType::class.java.classLoader)
         },
         granularity = ArrangementGranularity.entries[parcel.readInt()],
-        mixedGranularity = run {
-            val modes = mutableListOf<GranularityMode>().apply {
-                parcel.readList(this, GranularityMode::class.java.classLoader)
-            }
-            VideoActionType.entries.indices.associateBy(
-                keySelector = { VideoActionType.entries[it] },
-                valueTransform = { modes.getOrElse(it) { GranularityMode.PER_IMAGE } }
-            )
-        },
         imageIntervalSource = AudioIntervalSource.entries[parcel.readInt()],
         fixedImageInterval = parcel.readFloat(),
         badgeInterval = parcel.readFloat(),
@@ -97,7 +85,6 @@ data class VideoGenerationConfig(
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeList(actionOrder)
         parcel.writeInt(granularity.ordinal)
-        parcel.writeList(VideoActionType.entries.map { mixedGranularity[it] ?: GranularityMode.PER_IMAGE })
         parcel.writeInt(imageIntervalSource.ordinal)
         parcel.writeFloat(fixedImageInterval)
         parcel.writeFloat(badgeInterval)

@@ -46,7 +46,6 @@ import com.tdds.jh.R
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
 import com.tdds.jh.model.tierlist.video.AudioOverlayMode
-import com.tdds.jh.model.tierlist.video.GranularityMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
@@ -60,11 +59,17 @@ fun VideoGenerationConfigDialog(
     initialConfig: VideoGenerationConfig,
     onDismiss: () -> Unit,
     onConfirm: (VideoGenerationConfig) -> Unit,
+    onConfigChange: (VideoGenerationConfig) -> Unit,
     onPreview: (() -> Unit)? = null,
     onExport: (() -> Unit)? = null
 ) {
-    var config by remember { mutableStateOf(initialConfig) }
+    var config by remember(initialConfig) { mutableStateOf(initialConfig) }
     val extendedColors = LocalExtendedColors.current
+
+    fun updateConfig(newConfig: VideoGenerationConfig) {
+        config = newConfig
+        onConfigChange(newConfig)
+    }
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -101,14 +106,14 @@ fun VideoGenerationConfigDialog(
                             if (index > 0) {
                                 val list = config.actionOrder.toMutableList()
                                 list.add(index - 1, list.removeAt(index))
-                                config = config.copy(actionOrder = list)
+                                updateConfig(config.copy(actionOrder = list))
                             }
                         },
                         onMoveDown = { index ->
                             if (index < config.actionOrder.size - 1) {
                                 val list = config.actionOrder.toMutableList()
                                 list.add(index + 1, list.removeAt(index))
-                                config = config.copy(actionOrder = list)
+                                updateConfig(config.copy(actionOrder = list))
                             }
                         }
                     )
@@ -116,23 +121,19 @@ fun VideoGenerationConfigDialog(
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     GranularitySection(
                         granularity = config.granularity,
-                        mixedGranularity = config.mixedGranularity,
-                        onGranularityChange = { config = config.copy(granularity = it) },
-                        onMixedModeChange = { type, mode ->
-                            config = config.copy(mixedGranularity = config.mixedGranularity.toMutableMap().apply { put(type, mode) })
-                        }
+                        onGranularityChange = { updateConfig(config.copy(granularity = it)) }
                     )
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     IntervalSection(
                         config = config,
-                        onConfigChange = { config = it }
+                        onConfigChange = { updateConfig(it) }
                     )
 
                     HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                     AudioSection(
                         config = config,
-                        onConfigChange = { config = it }
+                        onConfigChange = { updateConfig(it) }
                     )
                 }
 
@@ -154,10 +155,6 @@ fun VideoGenerationConfigDialog(
                         }
                         Spacer(Modifier.width(8.dp))
                     }
-                    TextButton(onClick = onDismiss) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                    Spacer(Modifier.width(8.dp))
                     Button(onClick = { onConfirm(config) }) {
                         Text(stringResource(R.string.confirm))
                     }
@@ -216,9 +213,7 @@ private fun ActionOrderSection(
 @Composable
 private fun GranularitySection(
     granularity: ArrangementGranularity,
-    mixedGranularity: Map<VideoActionType, GranularityMode>,
-    onGranularityChange: (ArrangementGranularity) -> Unit,
-    onMixedModeChange: (VideoActionType, GranularityMode) -> Unit
+    onGranularityChange: (ArrangementGranularity) -> Unit
 ) {
     SectionTitle(stringResource(R.string.arrangement_granularity))
     ArrangementGranularity.entries.forEach { mode ->
@@ -231,42 +226,6 @@ private fun GranularitySection(
         ) {
             RadioButton(selected = granularity == mode, onClick = { onGranularityChange(mode) })
             Text(stringResource(mode.labelRes), fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
-        }
-    }
-
-    if (granularity == ArrangementGranularity.MIXED) {
-        Spacer(Modifier.height(8.dp))
-        VideoActionType.entries.forEach { action ->
-            val currentMode = mixedGranularity[action] ?: GranularityMode.PER_IMAGE
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(stringResource(action.labelRes), fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                Row {
-                    GranularityMode.entries.forEach { mode ->
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(
-                                    if (currentMode == mode) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.surfaceVariant
-                                )
-                                .clickable { onMixedModeChange(action, mode) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = stringResource(mode.labelRes),
-                                fontSize = 12.sp,
-                                color = if (currentMode == mode) MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

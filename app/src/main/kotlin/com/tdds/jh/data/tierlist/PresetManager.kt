@@ -16,7 +16,6 @@ import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
 import com.tdds.jh.model.tierlist.video.AudioOverlayMode
-import com.tdds.jh.model.tierlist.video.GranularityMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
@@ -1132,11 +1131,6 @@ class PresetManager(private val context: Context) {
         return JSONObject().apply {
             put("actionOrder", JSONArray(config.actionOrder.map { it.name }))
             put("granularity", config.granularity.name)
-            put("mixedGranularity", JSONObject().apply {
-                config.mixedGranularity.forEach { (type, mode) ->
-                    put(type.name, mode.name)
-                }
-            })
             put("imageIntervalSource", config.imageIntervalSource.name)
             put("fixedImageInterval", config.fixedImageInterval.toDouble())
             put("badgeInterval", config.badgeInterval.toDouble())
@@ -1166,15 +1160,10 @@ class PresetManager(private val context: Context) {
                         VideoActionType.valueOf(array.getString(index))
                     }
                 },
-                granularity = ArrangementGranularity.valueOf(json.getString("granularity")),
-                mixedGranularity = json.getJSONObject("mixedGranularity").let { obj ->
-                    VideoActionType.entries.associateWith { type ->
-                        try {
-                            GranularityMode.valueOf(obj.getString(type.name))
-                        } catch (_: Exception) {
-                            GranularityMode.PER_IMAGE
-                        }
-                    }
+                granularity = try {
+                    ArrangementGranularity.valueOf(json.getString("granularity"))
+                } catch (_: Exception) {
+                    ArrangementGranularity.PER_IMAGE
                 },
                 imageIntervalSource = AudioIntervalSource.valueOf(json.getString("imageIntervalSource")),
                 fixedImageInterval = json.getDouble("fixedImageInterval").toFloat(),

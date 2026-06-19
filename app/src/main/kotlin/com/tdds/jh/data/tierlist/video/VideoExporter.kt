@@ -82,7 +82,7 @@ class VideoExporter(private val context: Context) {
         val timeline = TimelineBuilder(
             config,
             AudioDurationProvider(context)
-        ).build(tierImages)
+        ).build(tiers, tierImages)
 
         if (timeline.totalDuration <= 0f) {
             onProgress(1f, 0, 0)

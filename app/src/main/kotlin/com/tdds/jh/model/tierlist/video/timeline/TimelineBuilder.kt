@@ -2,9 +2,9 @@ package com.tdds.jh.model.tierlist.video.timeline
 
 import com.tdds.jh.data.tierlist.video.AudioDurationProvider
 import com.tdds.jh.model.tierlist.TierImage
+import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.video.ArrangementGranularity
 import com.tdds.jh.model.tierlist.video.AudioIntervalSource
-import com.tdds.jh.model.tierlist.video.GranularityMode
 import com.tdds.jh.model.tierlist.video.NameDisplayMode
 import com.tdds.jh.model.tierlist.video.VideoActionType
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
@@ -23,14 +23,13 @@ class TimelineBuilder(
     /**
      * 构建时间线
      */
-    fun build(tierImages: List<TierImage>): Timeline {
+    fun build(tiers: List<TierItem>, tierImages: List<TierImage>): Timeline {
         val actions = mutableListOf<TimelineAction>()
         var currentTime = 0f
 
         when (config.granularity) {
             ArrangementGranularity.PER_IMAGE -> buildPerImage(tierImages, actions, currentTime)
-            ArrangementGranularity.PER_TYPE -> buildPerType(tierImages, actions, currentTime)
-            ArrangementGranularity.MIXED -> buildMixed(tierImages, actions, currentTime)
+            ArrangementGranularity.PER_TYPE -> buildPerType(tiers, tierImages, actions, currentTime)
         }
 
         val audioSegments = buildAudioSegments(tierImages, actions)
@@ -46,8 +45,33 @@ class TimelineBuilder(
         actions: MutableList<TimelineAction>,
         initialTime: Float
     ): Float {
+        return buildSequentialImages(tierImages, actions, initialTime)
+    }
+
+    private fun buildPerType(
+        tiers: List<TierItem>,
+        tierImages: List<TierImage>,
+        actions: MutableList<TimelineAction>,
+        initialTime: Float
+    ): Float {
         var currentTime = initialTime
-        tierImages.forEachIndexed { _, image ->
+        tiers.forEach { tier ->
+            val imagesInTier = tierImages.filter { it.tierLabel == tier.label }
+            currentTime = buildSequentialImages(imagesInTier, actions, currentTime)
+        }
+        return currentTime
+    }
+
+    /**
+     * 逐张播放图片：单张图片的所有动作（以及解说音频）全部完成后，再切换到下一张。
+     */
+    private fun buildSequentialImages(
+        images: List<TierImage>,
+        actions: MutableList<TimelineAction>,
+        initialTime: Float
+    ): Float {
+        var currentTime = initialTime
+        images.forEach { image ->
             val imageStartTime = currentTime
             config.actionOrder.forEachIndexed { typeIndex, actionType ->
                 if (typeIndex > 0) {
@@ -59,56 +83,6 @@ class TimelineBuilder(
             }
             // 当前图片至少展示到解说音频完整播放完毕，才能切换到下一张
             currentTime = max(currentTime, imageStartTime + imageIntervalFor(image))
-        }
-        return currentTime
-    }
-
-    private fun buildPerType(
-        tierImages: List<TierImage>,
-        actions: MutableList<TimelineAction>,
-        initialTime: Float
-    ): Float {
-        var currentTime = initialTime
-        config.actionOrder.forEachIndexed { typeIndex, actionType ->
-            if (typeIndex > 0) {
-                currentTime += config.crossTypePause
-            }
-            tierImages.forEach { image ->
-                val imageActions = createActionsForImageAndType(image, actionType, currentTime)
-                actions.addAll(imageActions)
-                currentTime += imageActions.totalDuration()
-            }
-        }
-        return currentTime
-    }
-
-    private fun buildMixed(
-        tierImages: List<TierImage>,
-        actions: MutableList<TimelineAction>,
-        initialTime: Float
-    ): Float {
-        var currentTime = initialTime
-        config.actionOrder.forEachIndexed { typeIndex, actionType ->
-            if (typeIndex > 0) {
-                currentTime += config.crossTypePause
-            }
-            val mode = config.mixedGranularity[actionType] ?: GranularityMode.PER_IMAGE
-            if (mode == GranularityMode.PER_IMAGE) {
-                tierImages.forEachIndexed { imageIndex, image ->
-                    if (imageIndex > 0) {
-                        currentTime += config.crossImagePause
-                    }
-                    val imageActions = createActionsForImageAndType(image, actionType, currentTime)
-                    actions.addAll(imageActions)
-                    currentTime += imageActions.totalDuration()
-                }
-            } else {
-                tierImages.forEach { image ->
-                    val imageActions = createActionsForImageAndType(image, actionType, currentTime)
-                    actions.addAll(imageActions)
-                    currentTime += imageActions.totalDuration()
-                }
-            }
         }
         return currentTime
     }
