@@ -14,6 +14,7 @@ import com.tdds.jh.model.tierlist.TierItem
 import com.tdds.jh.model.tierlist.video.VideoGenerationConfig
 import com.tdds.jh.screens.tierlist.logic.utils.FileUtils
 import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.PresetData
 import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.screens.tierlist.service.SettingsService
@@ -53,7 +54,7 @@ class PresetOperationHandler(
                     PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> applyImportedPreset(importResult, currentPendingImages)
                     PresetManager.ImportStatus.NEEDS_OVERWRITE -> { dialogState.pendingImportResult = importResult; dialogState.showImportOverwriteDialog = true }
                 }
-            } catch (e: Exception) { showToast("导入预设失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+            } catch (e: Exception) { showToast(context.getString(R.string.preset_import_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isImportingPreset = false; onResumeDraftSave?.invoke() }
         }
     }
@@ -67,7 +68,7 @@ class PresetOperationHandler(
                     PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> applyImportedPreset(importResult, emptyList())
                     PresetManager.ImportStatus.NEEDS_OVERWRITE -> { dialogState.pendingImportResult = importResult; dialogState.showImportOverwriteDialog = true }
                 }
-            } catch (e: Exception) { showToast("导入预设失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+            } catch (e: Exception) { showToast(context.getString(R.string.preset_import_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isImportingPreset = false; onResumeDraftSave?.invoke() }
         }
     }
@@ -80,7 +81,10 @@ class PresetOperationHandler(
         settingsService.clearCropSettings(); settingsService.customCropWidth = result.customCropWidth; settingsService.customCropHeight = result.customCropHeight; settingsService.useCustomCropSize = result.useCustomCropSize; settingsService.cropRatio = result.cropRatio
         onVideoConfigChange(result.videoConfig)
         onTierRowPositionsReset()
-        val message = when (importResult.status) { PresetManager.ImportStatus.ALREADY_EXISTS -> "预设已加载"; else -> "导入预设成功" }
+        val message = when (importResult.status) {
+            PresetManager.ImportStatus.ALREADY_EXISTS -> context.getString(R.string.preset_loaded_toast)
+            else -> context.getString(R.string.preset_import_success)
+        }
         showToast(message, android.widget.Toast.LENGTH_SHORT)
     }
 
@@ -97,8 +101,8 @@ class PresetOperationHandler(
                     context.contentResolver.openOutputStream(uri, "rwt")?.use { output -> java.io.FileInputStream(outputFile).use { input -> input.copyTo(output) } }
                     outputFile.delete()
                 }
-                showToast("导出预设成功", android.widget.Toast.LENGTH_SHORT)
-            } catch (e: Exception) { showToast("导出预设失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+                showToast(context.getString(R.string.preset_export_success), android.widget.Toast.LENGTH_SHORT)
+            } catch (e: Exception) { showToast(context.getString(R.string.preset_export_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isExportingPreset = false; onResumeDraftSave?.invoke() }
         }
     }
@@ -128,9 +132,9 @@ class PresetOperationHandler(
                     onPendingImagesChange(result.pendingImages); onTitleChange(draftData.title); onAuthorChange(draftData.author)
                     settingsService.clearCropSettings(); settingsService.customCropWidth = result.customCropWidth; settingsService.customCropHeight = result.customCropHeight; settingsService.useCustomCropSize = result.useCustomCropSize; settingsService.cropRatio = result.cropRatio
                     onVideoConfigChange(result.videoConfig)
-                    onTierRowPositionsReset(); showToast("草稿已恢复", android.widget.Toast.LENGTH_SHORT)
+                    onTierRowPositionsReset(); showToast(context.getString(R.string.draft_restored), android.widget.Toast.LENGTH_SHORT)
                 } else throw IllegalStateException("加载草稿失败")
-            } catch (e: Exception) { showToast("恢复草稿失败", android.widget.Toast.LENGTH_SHORT) }
+            } catch (e: Exception) { showToast(context.getString(R.string.draft_restore_failed), android.widget.Toast.LENGTH_SHORT) }
             finally { onLoadingStateChange(false) }
         }
     }
@@ -163,7 +167,7 @@ class PresetOperationHandler(
                     PresetManager.ImportStatus.SUCCESS, PresetManager.ImportStatus.ALREADY_EXISTS -> { applyImportedPreset(importResult, emptyList()); presetManager.cleanupDraftOnly(); dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
                     PresetManager.ImportStatus.NEEDS_OVERWRITE -> { dialogState.pendingImportResult = importResult; dialogState.showImportOverwriteDialog = true; dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
                 }
-            } catch (e: Exception) { dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false); showToast("导入预设失败: ${e.message}", android.widget.Toast.LENGTH_SHORT) }
+            } catch (e: Exception) { dialogState.isImportingPreset = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false); showToast(context.getString(R.string.preset_import_failed, e.message ?: ""), android.widget.Toast.LENGTH_SHORT) }
         }
     }
 }

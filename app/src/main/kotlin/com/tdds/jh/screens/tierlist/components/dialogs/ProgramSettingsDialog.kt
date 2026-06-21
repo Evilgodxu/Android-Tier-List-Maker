@@ -116,7 +116,18 @@ private fun SettingsSliderItem(label: String, value: Float, onValueChange: (Floa
 
 @Composable
 fun LanguageSelectionDialog(currentLanguage: String, onDismiss: () -> Unit, onLanguageSelected: (String) -> Unit) {
-    val languages = listOf("zh" to "简体中文", "en" to "English", "ja" to "日本語", "ko" to "한국어", "ru" to "Русский", "de" to "Deutsch", "fr" to "Français", "es" to "Español", "ar" to "العربية", "pt" to "Português")
+    val languages = listOf(
+        "zh" to stringResource(R.string.language_zh),
+        "en" to "English",
+        "ja" to "日本語",
+        "ko" to "한국어",
+        "ru" to "Русский",
+        "de" to "Deutsch",
+        "fr" to "Français",
+        "es" to "Español",
+        "ar" to "العربية",
+        "pt" to "Português"
+    )
     val extendedColors = LocalExtendedColors.current
     Dialog(onDismissRequest = onDismiss) {
         Card(modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = 500.dp), shape = MaterialTheme.shapes.medium, colors = CardDefaults.cardColors(containerColor = extendedColors.cardBackground)) {

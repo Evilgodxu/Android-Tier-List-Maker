@@ -14,7 +14,7 @@ import kotlin.math.max
 /**
  * 时间线构建引擎
  *
- * 根据当前 tierImages 顺序、视频配置与录制动作，生成带时间戳的 Timeline。
+ * 根据当前 tierImages 顺序与视频配置，生成带时间戳的 Timeline。
  */
 class TimelineBuilder(
     private val config: VideoGenerationConfig,
@@ -30,8 +30,8 @@ class TimelineBuilder(
         var currentTime = config.initialPauseSeconds
 
         when (config.granularity) {
-            ArrangementGranularity.PER_IMAGE -> buildPerImage(tierImages, actions, audioSegments, currentTime)
-            ArrangementGranularity.PER_TYPE -> buildPerType(tiers, tierImages, actions, audioSegments, currentTime)
+            ArrangementGranularity.PER_IMAGE -> buildByImageOrder(tierImages, actions, audioSegments, currentTime)
+            ArrangementGranularity.PER_TYPE -> buildByTierOrder(tiers, tierImages, actions, audioSegments, currentTime)
         }
 
         val maxActionEnd = actions.maxOfOrNull { it.endTime } ?: 0f
@@ -41,7 +41,8 @@ class TimelineBuilder(
         return Timeline(actions, audioSegments, totalDuration)
     }
 
-    private fun buildPerImage(
+    /** 按图片顺序构建：直接按 tierImages 列表顺序逐张播放 */
+    private fun buildByImageOrder(
         tierImages: List<TierImage>,
         actions: MutableList<TimelineAction>,
         audioSegments: MutableList<AudioSegment>,
@@ -50,7 +51,8 @@ class TimelineBuilder(
         return buildSequentialImages(tierImages, actions, audioSegments, initialTime)
     }
 
-    private fun buildPerType(
+    /** 按层级顺序构建：按 tier 分组，每层内图片按 tierImages 顺序播放 */
+    private fun buildByTierOrder(
         tiers: List<TierItem>,
         tierImages: List<TierImage>,
         actions: MutableList<TimelineAction>,

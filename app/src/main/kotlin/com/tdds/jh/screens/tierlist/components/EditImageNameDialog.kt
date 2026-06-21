@@ -51,7 +51,7 @@ fun EditImageNameDialog(
                     }
                 },
                 label = { Text(stringResource(R.string.image_name)) },
-                placeholder = { Text(currentName.ifBlank { stringResource(R.string.image_name_hint) }) },
+                placeholder = { Text(currentName.ifBlank { stringResource(R.string.blank_to_hide_hint) }) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(

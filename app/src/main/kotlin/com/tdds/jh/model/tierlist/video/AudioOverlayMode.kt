@@ -4,7 +4,7 @@ import androidx.annotation.StringRes
 import com.tdds.jh.R
 
 /**
- * 解说音频叠加方式
+ * 解说音频叠加方式（当前未生效，预留枚举）
  */
 enum class AudioOverlayMode(@StringRes val labelRes: Int) {
     OVERLAY(R.string.audio_overlay_overlay),

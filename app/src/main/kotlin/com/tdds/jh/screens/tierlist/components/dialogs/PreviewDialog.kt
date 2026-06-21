@@ -76,7 +76,7 @@ fun PreviewDialog(
         confirmButton = {
             Row {
                 if (onShare != null) { TextButton(onClick = onShare, enabled = !isSaving && !isSharing) { if (isSharing) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.share)) } }
-                TextButton(onClick = onSave, enabled = !isSaving && !isSharing) { if (isSaving) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.confirm_save)) }
+                TextButton(onClick = onSave, enabled = !isSaving && !isSharing) { if (isSaving) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp) else Text(stringResource(R.string.save)) }
             }
         })
 }

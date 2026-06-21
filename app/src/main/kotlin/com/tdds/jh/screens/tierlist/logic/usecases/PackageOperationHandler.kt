@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.tdds.jh.data.tierlist.PresetManager
 import com.tdds.jh.data.tierlist.PackageItem
 import com.tdds.jh.data.tierlist.PackageManager as ResourcePackageManager
+import com.tdds.jh.R
 import com.tdds.jh.data.tierlist.ZipPasswordRequiredException
 import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.ui.toast.showToastWithoutIcon
@@ -32,8 +33,8 @@ class PackageOperationHandler(
         scope.launch {
             try {
                 val success = withContext(Dispatchers.IO) { ResourcePackageManager.exportPackageAsWebP(context, packageItem.file, uri) }
-                if (success) showToast("导出图包成功", android.widget.Toast.LENGTH_SHORT) else showToast("导出图包失败", android.widget.Toast.LENGTH_LONG)
-            } catch (e: Exception) { showToast("导出图包失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+                if (success) showToast(context.getString(R.string.package_export_success), android.widget.Toast.LENGTH_SHORT) else showToast(context.getString(R.string.package_export_failed, ""), android.widget.Toast.LENGTH_LONG)
+            } catch (e: Exception) { showToast(context.getString(R.string.package_export_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isExportingPackage = false; dialogState.packageToExport = null; onResumeDraftSave?.invoke() }
         }
     }
@@ -48,9 +49,9 @@ class PackageOperationHandler(
                 val imagesDir = java.io.File(presetManager.getWorkImagesDirectory(), "images")
                 val importedUris = withContext(Dispatchers.IO) { ResourcePackageManager.importImagesFromZip(context, zipUri, imagesDir, password) }
                 onPendingImagesChange(currentPendingImages + importedUris)
-                showToast("已导入 ${importedUris.size} 张图片", android.widget.Toast.LENGTH_SHORT)
-            } catch (e: ZipPasswordRequiredException) { showToast("ZIP文件需要密码", android.widget.Toast.LENGTH_LONG); return@launch }
-            catch (e: Exception) { showToast("导入失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+                showToast(context.getString(R.string.import_success, importedUris.size), android.widget.Toast.LENGTH_SHORT)
+            } catch (e: ZipPasswordRequiredException) { showToast(context.getString(R.string.zip_password_required), android.widget.Toast.LENGTH_LONG); return@launch }
+            catch (e: Exception) { showToast(context.getString(R.string.import_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isImportingPackage = false; onResumeDraftSave?.invoke() }
         }
     }
@@ -62,9 +63,9 @@ class PackageOperationHandler(
             try {
                 val workBadgesDir = java.io.File(presetManager.getWorkImagesDirectory(), PresetManager.BADGES_FOLDER_NAME)
                 val importedUris = withContext(Dispatchers.IO) { ResourcePackageManager.importImagesFromZip(context, zipUri, workBadgesDir, password) }
-                onBadgeDialogRefresh(); showToast("已导入 ${importedUris.size} 张小图标", android.widget.Toast.LENGTH_SHORT)
-            } catch (e: ZipPasswordRequiredException) { showToast("ZIP文件需要密码", android.widget.Toast.LENGTH_LONG); return@launch }
-            catch (e: Exception) { showToast("导入失败: ${e.message}", android.widget.Toast.LENGTH_LONG) }
+                onBadgeDialogRefresh(); showToast(context.getString(R.string.badges_imported_toast, importedUris.size), android.widget.Toast.LENGTH_SHORT)
+            } catch (e: ZipPasswordRequiredException) { showToast(context.getString(R.string.zip_password_required), android.widget.Toast.LENGTH_LONG); return@launch }
+            catch (e: Exception) { showToast(context.getString(R.string.import_failed, e.message ?: ""), android.widget.Toast.LENGTH_LONG) }
             finally { dialogState.isImportingPackage = false; onResumeDraftSave?.invoke() }
         }
     }
@@ -81,7 +82,7 @@ class PackageOperationHandler(
                 val zipFile = net.lingala.zip4j.ZipFile(tempZipFile); val isEncrypted = zipFile.isEncrypted; tempDir.deleteRecursively()
                 if (isEncrypted) { dialogState.externalPackageUri = uri; dialogState.externalPackageFileName = fileName ?: "imported_${System.currentTimeMillis()}.zip"; dialogState.externalPackagePassword = null; dialogState.externalPackagePasswordError = false; dialogState.showExternalPackagePasswordDialog = true; dialogState.isImportingPackage = false; onResumeDraftSave?.invoke() }
                 else { importExternalPackageInternal(uri, fileName, onLoadingStateChange) }
-            } catch (e: Exception) { dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); showToast("图包导入失败: ${e.message}", android.widget.Toast.LENGTH_SHORT); onLoadingStateChange(false) }
+            } catch (e: Exception) { dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); showToast(context.getString(R.string.package_import_failed, e.message ?: ""), android.widget.Toast.LENGTH_SHORT); onLoadingStateChange(false) }
         }
     }
 
@@ -97,9 +98,9 @@ class PackageOperationHandler(
             try {
                 val actualFileName = fileName ?: "imported_${System.currentTimeMillis()}.zip"
                 val savedPackageFile = withContext(Dispatchers.IO) { presetManager.saveImportedPackage(uri, actualFileName, password) }
-                if (savedPackageFile != null) showToast("图包导入成功: ${savedPackageFile.nameWithoutExtension}", android.widget.Toast.LENGTH_SHORT) else showToast("图包导入失败", android.widget.Toast.LENGTH_SHORT)
+                if (savedPackageFile != null) showToast(context.getString(R.string.package_import_success, savedPackageFile.nameWithoutExtension), android.widget.Toast.LENGTH_SHORT) else showToast(context.getString(R.string.external_package_import_failed_toast), android.widget.Toast.LENGTH_SHORT)
             } catch (e: ZipPasswordRequiredException) { dialogState.externalPackagePasswordError = true; dialogState.showExternalPackagePasswordDialog = true; return@launch }
-            catch (e: Exception) { showToast("图包导入失败: ${e.message}", android.widget.Toast.LENGTH_SHORT) }
+            catch (e: Exception) { showToast(context.getString(R.string.package_import_failed, e.message ?: ""), android.widget.Toast.LENGTH_SHORT) }
             finally { dialogState.externalPackageUri = null; dialogState.externalPackageFileName = ""; dialogState.externalPackagePassword = null; dialogState.isImportingPackage = false; onResumeDraftSave?.invoke(); onLoadingStateChange(false) }
         }
     }

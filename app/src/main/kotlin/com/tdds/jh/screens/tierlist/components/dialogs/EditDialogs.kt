@@ -80,7 +80,7 @@ fun EditAuthorDialog(currentAuthor: String, onDismiss: () -> Unit, onConfirm: (S
     val extendedColors = LocalExtendedColors.current
     AlertDialog(onDismissRequest = onDismiss, containerColor = extendedColors.cardBackground,
         title = { Text(stringResource(R.string.edit_author)) },
-        text = { OutlinedTextField(value = author, onValueChange = { author = it }, label = { Text(stringResource(R.string.author_name)) }, placeholder = { Text(currentAuthor.ifBlank { stringResource(R.string.author_placeholder) }) }, singleLine = true,
+        text = { OutlinedTextField(value = author, onValueChange = { author = it }, label = { Text(stringResource(R.string.author_name)) }, placeholder = { Text(currentAuthor.ifBlank { stringResource(R.string.blank_to_hide_hint) }) }, singleLine = true,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { onConfirm(author) })) },
         confirmButton = {}, dismissButton = {})
 }

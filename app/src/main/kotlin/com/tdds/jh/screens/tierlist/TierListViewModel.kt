@@ -440,7 +440,7 @@ fun rememberTierListViewModel(
                     vm.setImageAudio(imageId, fileUri)
                     showToastWithoutIcon(context, audioAddedText)
                 } else {
-                    showToastWithoutIcon(context, "音频添加失败")
+                    showToastWithoutIcon(context, context.getString(R.string.audio_add_failed))
                 }
                 vm.dialogState.selectedImageForAudio = null
             }

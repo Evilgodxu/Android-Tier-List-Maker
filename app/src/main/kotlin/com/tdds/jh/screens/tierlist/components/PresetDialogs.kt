@@ -82,7 +82,7 @@ fun ManagePresetsDialog(
             ) {
                 // 标题
                 Text(
-                    text = stringResource(R.string.preset_manager_title),
+                    text = stringResource(R.string.manage_presets),
                     fontSize = 20.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -351,7 +351,7 @@ fun PresetListDialog(
                                                     withContext(Dispatchers.Main) {
                                                         android.widget.Toast.makeText(
                                                             context,
-                                                            "应用预设失败: ${e.message}",
+                                                            context.getString(R.string.preset_apply_failed_toast, e.message ?: ""),
                                                             android.widget.Toast.LENGTH_LONG
                                                         ).show()
                                                     }

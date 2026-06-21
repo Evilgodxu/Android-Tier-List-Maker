@@ -5,13 +5,13 @@ import android.os.Parcelable
 
 /**
  * 视频生成配置
- * 与榜单数据解耦，可保存为编排预设
+ * 可随榜单预设一起保存与复用
  */
 data class VideoGenerationConfig(
     /** 三种动作类型的播放顺序 */
     val actionOrder: List<VideoActionType> = DEFAULT_ACTION_ORDER,
 
-    /** 编排粒度 */
+    /** 图片播放顺序：按图片顺序 / 按层级顺序 */
     val granularity: ArrangementGranularity = ArrangementGranularity.PER_IMAGE,
 
     /** 图片间隔来源 */
@@ -32,25 +32,25 @@ data class VideoGenerationConfig(
     /** 切换到下一类型动作前的全局等待（秒） */
     val crossTypePause: Float = 0f,
 
-    /** 串行模式下完成一张图片全部动作后的额外停顿（秒，不含音频间隔） */
+    /** 按图片顺序模式下，完成一张图片全部动作后的额外停顿（秒，不含音频间隔） */
     val crossImagePause: Float = 0f,
 
     /** 在音频时长基础上统一增加的偏移（秒） */
     val extraAudioOffset: Float = 0f,
 
-    /** 解说音频叠加方式 */
+    /** 解说音频叠加方式（当前未生效，预留字段） */
     val audioOverlayMode: AudioOverlayMode = AudioOverlayMode.KEEP_SFX,
 
-    /** 背景音乐 URI（可为空） */
+    /** 背景音乐 URI（可为空，当前未生效，仅 UI 入口保留） */
     val backgroundMusicUri: String? = null,
 
-    /** 背景音乐音量 0~1 */
+    /** 背景音乐音量 0~1（当前未生效，仅 UI 入口保留） */
     val backgroundMusicVolume: Float = 0.3f,
 
     /** 解说音频音量 0~1 */
     val narrationVolume: Float = 1f,
 
-    /** 动作音效音量 0~1 */
+    /** 动作音效音量 0~1（当前未生效，预留字段） */
     val sfxVolume: Float = 0.6f,
 
     /** 解说音频播放顺序 */

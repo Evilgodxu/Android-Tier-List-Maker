@@ -83,7 +83,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 
 /**
  * 可滑动的层级行组件
- * 支持左右滑动删除、长按拖动排序、图片拖拽等功能
+ * 支持向右滑动删除、长按拖动排序、图片拖拽等功能
  *
  * @param modifier 修饰符
  * @param tier 层级项数据

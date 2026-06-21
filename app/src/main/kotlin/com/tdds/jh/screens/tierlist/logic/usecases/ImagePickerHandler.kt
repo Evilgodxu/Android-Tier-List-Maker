@@ -13,6 +13,7 @@ import com.tdds.jh.model.tierlist.TierImage
 import com.tdds.jh.screens.tierlist.logic.utils.FileUtils
 import com.tdds.jh.data.tierlist.ImageResourceManager
 import com.tdds.jh.data.tierlist.PresetManager
+import com.tdds.jh.R
 import com.tdds.jh.screens.tierlist.DialogState
 import com.tdds.jh.ui.toast.showToastWithoutIcon
 import kotlinx.coroutines.CoroutineScope
@@ -69,7 +70,7 @@ class ImagePickerHandler(
             onPendingImagesChange(currentPendingImages + importedUris)
 
             if (importedUris.isNotEmpty()) {
-                showToastWithoutIcon(context, "已添加 ${importedUris.size} 张图片")
+                showToastWithoutIcon(context, context.getString(R.string.images_added, importedUris.size))
             }
             resetPickerState()
         }
@@ -148,7 +149,7 @@ class ImagePickerHandler(
                     try {
                         copyImageToWorkDir(uri, PresetManager.BADGES_FOLDER_NAME, getBadgeFileName(uri))
                         onBadgeDialogRefresh()
-                        showToastWithoutIcon(context, "小图标已添加")
+                        showToastWithoutIcon(context, context.getString(R.string.badge_added))
                     } catch (e: Exception) {
                     } finally {
                         resetBadgeState()
@@ -218,7 +219,7 @@ class ImagePickerHandler(
             onBadgeDialogRefresh()
 
             if (successCount > 0) {
-                showToastWithoutIcon(context, "已添加 $successCount 张小图标")
+                showToastWithoutIcon(context, context.getString(R.string.badges_imported_toast, successCount))
             }
             resetBadgeState()
         }

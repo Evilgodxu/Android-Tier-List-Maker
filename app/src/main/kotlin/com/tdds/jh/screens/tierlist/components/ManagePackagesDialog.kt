@@ -174,7 +174,7 @@ fun ManagePackagesDialog(
                                         onClick = { showDeleteConfirm = packageItem }
                                     ) {
                                         Text(
-                                            stringResource(R.string.delete_package),
+                                            stringResource(R.string.delete),
                                             color = MaterialTheme.colorScheme.error
                                         )
                                     }

@@ -1,57 +1,139 @@
 <resources>
+    <!-- ==================== 应用基础 ==================== -->
     <string name="app_name">梯度大师</string>
-    <string name="settings">功能菜单</string>
+    <string name="default_title">梯度大师</string>
+    <string name="tier_list_default_title">梯度表</string>
+    <string name="tier_list_suffix">梯度表</string>
+
+    <!-- ==================== 通用操作 ==================== -->
     <string name="save">保存</string>
     <string name="reset">重置</string>
     <string name="reset_success">已重置</string>
     <string name="delete">删除</string>
     <string name="cancel">取消</string>
+    <string name="close">关闭</string>
     <string name="clear">清空</string>
     <string name="add">添加</string>
-    <string name="add_tier">添加层级</string>
-    <string name="edit_tier_name">编辑层级名称</string>
-    <string name="name">名称</string>
     <string name="confirm">确定</string>
-    <string name="select_color">修改颜色</string>
-    <string name="color_code_length_error">请输入6位颜色代码</string>
-    <string name="image_action">图片操作</string>
-    <string name="select_operation">选择要执行的操作</string>
-    <string name="move">移动</string>
-    <string name="replace">替换</string>
     <string name="rename">命名</string>
+    <string name="replace">替换</string>
+    <string name="move">移动</string>
     <string name="view">查看</string>
     <string name="crop">裁切</string>
-    <string name="select_crop_area">图片裁切</string>
-    <string name="crop_ratio">裁切比例</string>
-    <string name="ratio_1_1">1:1</string>
-    <string name="ratio_3_4">3:4</string>
     <string name="custom">自定义</string>
-    <string name="edit_image_name">编辑图片命名</string>
-    <string name="image_name">图片命名</string>
-    <string name="image_name_hint">留空则不显示</string>
-    <string name="move_to_tier">移动图片</string>
-    <string name="select_target_tier">选择目标层级:</string>
+    <string name="none">无</string>
+    <string name="loading_resources">加载中...</string>
+    <string name="calculating">计算中...</string>
+
+    <!-- ==================== 标题与作者 ==================== -->
     <string name="edit_title">编辑标题</string>
     <string name="title">标题</string>
     <string name="edit_author">编辑作者</string>
     <string name="author_name">作者名称</string>
-    <string name="author_placeholder">留空则不显示</string>
-    <string name="instructions">使用说明</string>
-    <string name="donate">捐赠打赏</string>
-    <string name="open_source_licenses">开源许可</string>
-    <string name="donate_thanks">感谢您的支持！</string>
-    <string name="donate_alipay">支付宝</string>
-    <string name="donate_no_app">未找到可用的支付应用</string>
-    <string name="saved_to_gallery">已保存到相册</string>
-    <string name="save_failed">保存失败:%1$s</string>
     <string name="input_author">输入作者名称</string>
     <string name="tier_author">制表:%1$s</string>
-    <string name="default_title">梯度大师</string>
+
+    <!-- ==================== 待分级区域 ==================== -->
     <string name="character_pool">待分级图片 (%1$d)</string>
-    <string name="instructions_content">【添加图片】\n• 从相册添加：点击待分级区域的"添加"按钮，从相册选择图片\n• 图包管理：点击功能菜单 → "图包管理"，选择"导入本地图包"导入ZIP格式图包文件（支持密码保护），或选择"选择内置图包"导入预设图包\n• 导入位置选择：导入图包时可选择导入到"待分级图片"或"角色小图标"区域\n\n【待分级区域操作】\n• 左右滑动：浏览待分级区域的图片\n• 向下拖动：将图片拖动到目标层级后松手即可放置到该层级\n• 向上拖动删除：向上拖动图片超过待分级区域顶部（图片变红）后松手即可删除\n• 点击添加：点击"添加"按钮从相册导入图片\n• 点击清空：点击"清空"按钮删除所有待分级图片\n\n【层级操作】\n• 编辑名称：单击层级左侧色块，输入新名称后确认\n• 修改颜色：双击层级左侧色块，选择预设颜色或输入十六进制颜色代码\n• 删除层级：向左或向右滑动层级，当层级变红时松手即可删除\n• 添加层级：点击底部+号按钮添加新层级\n• 层级排序：垂直拖动（上下拖动）层级左侧色块可调整层级顺序\n\n【层级内图片操作】\n• 单击：打开图片操作菜单（查看/裁切/移动/替换/命名/设置小图标）\n• 双击：选中图片（显示蓝色边框），再双击另一张图片可交换位置（支持跨层级）\n• 垂直拖动：上下拖动图片可在不同层级间移动，或拖回待分级区域\n• 向上拖动删除：向上拖动图片超过待分级区域顶部（图片变红）后松手即可删除\n• 调整位置：在图片操作菜单中选择"移动"，可将图片移动到其他层级，或使用"左移/右移"按钮微调位置\n\n【图片操作菜单】\n• 查看：查看大图和分辨率信息\n• 裁切：选择1:1或3:4比例裁切，或自定义像素大小\n• 移动：将图片移动到其他层级，或调整在当前层级的位置（左置/右置）\n• 替换：选择新图片替换当前图片\n• 命名：为图片添加名称，显示在图片底部\n• 小图标：为图片添加最多3个小图标，可选择小图标位置（1/2/3号位）\n\n【小图标】\n• 在图片操作菜单中选择"小图标"进行设置\n• 可为每张图片添加最多3个小图标\n• 默认显示在图片右上角\n• 可在程序设置中开启"外置小图"模式，使小图标显示在图片右侧\n• 图包导入：可将图包直接导入到小图标区域作为小图标使用\n• 从预览区选择：点击小图标槽位可从已导入的小图标列表中选择\n• 删除小图标：点击小图标右侧的删除按钮可移除该小图标\n\n【管理预设】\n点击功能菜单 → "管理预设"：\n• 保存预设：将当前梯度表配置保存为预设文件\n• 导入预设：选择.tdds格式的预设文件导入\n• 导出预设：将当前配置导出为.tdds文件分享\n• 预设列表：查看、应用或删除已保存的预设\n• 覆盖提示：导入已存在的预设时可选择覆盖或创建新预设\n\n【草稿自动保存】\n• 自动保存：应用会在后台自动保存当前编辑状态\n• 恢复提示：重新打开应用时，如发现未保存的草稿会提示恢复\n• 手动保存：按Home键或切换到其他应用时会触发草稿保存\n\n【其他功能】\n• 修改标题：点击顶部标题修改梯度表名称\n• 修改作者：点击"制表:作者名"修改作者名称\n• 保存：点击底部保存按钮，预览后保存到相册\n• 分享：保存前可选择分享图片\n• 重置：点击底部重置按钮恢复默认模板\n• 主题切换：点击左上角主题按钮切换浅色/深色主题\n• 功能菜单：点击右上角菜单图标，包含图包管理、管理预设、程序设置、使用说明、支持作者\n• 资源管理：点击右上角资源管理图标，查看应用缓存和工作目录大小，并可清理缓存\n\n【程序设置】\n• 禁用加添：开启后，点击待分级区域图片不会直接添加到层级\n• 外置小图：开启后，小图标显示在图片右侧而非右上角\n• 更改语言：切换界面语言\n• 调节浮显：调整拖动图片时预览浮动的位置偏移\n• 默认主题：开启后跟随系统主题自动切换浅色/深色模式</string>
     <string name="click_to_add_image">点击添加图片</string>
+    <string name="drop_image_here">松开手指放置图片</string>
+    <string name="images_added">已添加 %1$d 张图片</string>
+    <string name="images_cleared">已清理 %1$d 张导入图片</string>
+
+    <!-- ==================== 层级 ==================== -->
+    <string name="add_tier">添加层级</string>
+    <string name="edit_tier_name">编辑层级名称</string>
+    <string name="name">名称</string>
+    <string name="select_color">修改颜色</string>
+    <string name="color_code_length_error">请输入6位颜色代码</string>
     <string name="tier_label">%1$s 层级</string>
     <string name="tier_name_exists">层级名称已存在</string>
+
+    <!-- ==================== 图片操作 ==================== -->
+    <string name="image_action">图片操作</string>
+    <string name="select_operation">选择要执行的操作</string>
+    <string name="move_to_tier">移动图片</string>
+    <string name="select_target_tier">选择目标层级:</string>
+    <string name="move_position">调整位置</string>
+    <string name="move_to_first">左置</string>
+    <string name="move_to_last">右置</string>
+    <string name="move_left">左移</string>
+    <string name="move_right">右移</string>
+    <string name="edit_image_name">编辑图片命名</string>
+    <string name="image_name">图片命名</string>
+    <string name="image_dimensions">图片尺寸:%1$d x %2$d</string>
+    <string name="blank_to_hide_hint">留空则不显示</string>
+    <string name="image_audio">解说音频</string>
+
+    <!-- ==================== 裁切 ==================== -->
+    <string name="select_crop_area">图片裁切</string>
+    <string name="crop_ratio">裁切比例</string>
+    <string name="ratio_1_1">1:1</string>
+    <string name="ratio_3_4">3:4</string>
+    <string name="custom_crop_size">自定义裁切框大小</string>
+    <string name="crop_width">裁切宽度 (最大 %1$d)</string>
+    <string name="crop_height">裁切高度 (最大 %1$d)</string>
+    <string name="drag_to_move_crop">拖动移动裁切框</string>
+    <string name="apply_to_all">复用</string>
+    <string name="apply_to_all_success">已复用到 %1$d 张图片</string>
+
+    <!-- ==================== 小图标 ==================== -->
+    <string name="set_badges">小图</string>
+    <string name="set_badges_title">设置小图标</string>
+    <string name="badge_1">小图标1</string>
+    <string name="badge_2">小图标2</string>
+    <string name="badge_3">小图标3</string>
+    <string name="delete_badge_1">删除小图标1</string>
+    <string name="delete_badge_2">删除小图标2</string>
+    <string name="delete_badge_3">删除小图标3</string>
+    <string name="external_badge">外置小图</string>
+    <string name="select_badge_slot">选择要设置的小图标位置</string>
+    <string name="badge_slot_label">小图标%1$d %2$s</string>
+    <string name="add_badge">添加小图标</string>
+    <string name="click_badge_to_set">点击小图标设置到选中的位置</string>
+    <string name="no_badges_available">暂无可用小图标，请先添加</string>
+    <string name="badge_added">小图标已添加</string>
+    <string name="badge_add_failed">添加小图标失败: %1$s</string>
+    <string name="badges_added">成功添加 %1$d 个小图标</string>
+    <string name="badges_add_failed_partial">%1$d 个小图标添加失败</string>
+    <string name="badge_deleted">小图标已删除</string>
+    <string name="badge_delete_failed">删除小图标失败</string>
+    <string name="badge_in_use">小图标正在使用</string>
+    <string name="badge_in_use_message">该小图标正在被图片引用,无法删除</string>
+
+    <!-- ==================== 预览与保存 ==================== -->
+    <string name="preview_title">预览</string>
+    <string name="preview_image_desc">梯度表预览</string>
+    <string name="saved_to_gallery">已保存到相册</string>
+    <string name="save_failed">保存失败:%1$s</string>
+    <string name="saving_chart">正在保存图表...</string>
+    <string name="sharing_chart">正在生成分享...</string>
+    <string name="share">分享</string>
+    <string name="share_image">分享图片</string>
+    <string name="share_failed">分享失败: %1$s</string>
+    <string name="share_video">分享视频</string>
+
+    <!-- ==================== 功能菜单与程序设置 ==================== -->
+    <string name="settings">功能菜单</string>
+    <string name="program_settings">程序设置</string>
+    <string name="disable_click_add">禁用加添</string>
+    <string name="name_below_image">下置命名</string>
+    <string name="adjust_float_display">调节浮显</string>
+    <string name="horizontal_offset">水平偏移</string>
+    <string name="vertical_offset">垂直偏移</string>
+    <string name="follow_system_theme">默认主题</string>
+    <string name="disable_custom_font">禁用字体</string>
+    <string name="switch_to_light_theme">切换到浅色主题</string>
+    <string name="switch_to_dark_theme">切换到深色主题</string>
+
+    <!-- ==================== 语言 ==================== -->
+    <string name="change_language">更改语言</string>
+    <string name="select_language">选择语言</string>
+    <string name="language_zh">简体中文</string>
+
+    <!-- ==================== 图包管理 ==================== -->
+    <string name="image_package">图包管理</string>
+    <string name="manage_packages_title">管理图包</string>
     <string name="import_image_package">导入图包</string>
     <string name="select_zip_file">选择ZIP文件</string>
     <string name="import_success">成功导入 %1$d 张图片</string>
@@ -59,13 +141,11 @@
     <string name="no_images_in_zip">ZIP文件中没有找到图片</string>
     <string name="enter_zip_password">输入ZIP密码</string>
     <string name="zip_password_hint">该ZIP文件已加密,请输入密码</string>
+    <string name="zip_password_required">ZIP文件需要密码</string>
     <string name="password">密码</string>
     <string name="wrong_password">密码错误</string>
-    <string name="builtin_package_menu">管理图包</string>
-    <string name="manage_packages_title">管理图包</string>
     <string name="imported_packages">图包文件</string>
     <string name="select_package">选择图包</string>
-    <string name="delete_package">删除</string>
     <string name="import_package_short">导入</string>
     <string name="export_package">导出</string>
     <string name="no_packages">暂无图包</string>
@@ -73,58 +153,20 @@
     <string name="confirm_import_message">确定要导入 "%1$s" 图包吗?这将添加 %2$d 张图片到待分级区域.</string>
     <string name="importing">正在导入...</string>
     <string name="import_package_description">选择ZIP格式的图包文件,其中的图片将被添加到待分级区域</string>
-    <string name="change_language">更改语言</string>
-    <string name="select_language">选择语言</string>
+    <string name="select_import_target">选择导入位置</string>
+    <string name="import_to_pending">待分级图片</string>
+    <string name="import_to_badges">角色小图标</string>
+    <string name="import_target_description">请选择将图包导入到哪个区域</string>
+    <string name="import_target_message">图包 "%1$s" 包含 %2$d 张图片，请选择导入位置</string>
+    <string name="package_export_success">图包导出成功</string>
+    <string name="package_export_failed">图包导出失败: %1$s</string>
+    <string name="package_import_success">图包 "%1$s" 导入成功</string>
+    <string name="package_import_failed">图包导入失败: %1$s</string>
+    <string name="external_package_import_failed_toast">图包导入失败</string>
+    <string name="badges_imported_toast">已导入 %1$d 张小图标</string>
 
-    <string name="preview_title">预览</string>
-    <string name="preview_image_desc">梯度表预览</string>
-    <string name="confirm_save">保存</string>
-    <string name="program_settings">程序设置</string>
-    <string name="disable_click_add">禁用加添</string>
-    <string name="name_below_image">下置命名</string>
-    <string name="adjust_float_display">调节浮显</string>
-    <string name="horizontal_offset">水平偏移</string>
-    <string name="vertical_offset">垂直偏移</string>
-    <string name="drop_image_here">松开手指放置图片</string>
-    <string name="share">分享</string>
-    <string name="share_image">分享图片</string>
-    <string name="drag_to_move_crop">拖动移动裁切框</string>
-    <string name="author_jianghan">江寒</string>
-    <string name="author_jianghan_role">项目企划</string>
-    <string name="author_bug_reporter">徐惶</string>
-    <string name="author_bug_reporter_role">BUG提交</string>
-    <string name="author_kimi">Kimi-2.5</string>
-    <string name="author_kimi_role">代码生成</string>
-    <string name="author_glm">GLM-5</string>
-    <string name="author_glm_role">构建优化</string>
-    <string name="author_role_separator"> - %1$s</string>
-
-    <string name="share_failed">分享失败: %1$s</string>
-    <string name="switch_to_light_theme">切换到浅色主题</string>
-    <string name="switch_to_dark_theme">切换到深色主题</string>
-    <string name="set_badges">小图</string>
-    <string name="set_badges_title">设置小图标</string>
-    <string name="none">无</string>
-    <string name="badge_1">小图标1</string>
-    <string name="badge_2">小图标2</string>
-    <string name="badge_3">小图标3</string>
-    <string name="delete_badge_1">删除小图标1</string>
-    <string name="delete_badge_2">删除小图标2</string>
-    <string name="delete_badge_3">删除小图标3</string>
-    <string name="custom_crop_size">自定义裁切框大小</string>
-    <string name="image_dimensions">图片尺寸:%1$d x %2$d</string>
-    <string name="crop_width">裁切宽度 (最大 %1$d)</string>
-    <string name="crop_height">裁切高度 (最大 %1$d)</string>
-    <string name="external_badge">外置小图</string>
-    <string name="delete_label">删除</string>
-    <string name="share_log_subject">梯度大师应用日志</string>
-    <string name="share_log_title">分享日志</string>
-    <string name="tier_list_default_title">梯度表</string>
-    <string name="image_package">图包管理</string>
-
-    <!-- 预设管理相关字符串 -->
+    <!-- ==================== 预设管理 ==================== -->
     <string name="manage_presets">管理预设</string>
-    <string name="preset_manager_title">管理预设</string>
     <string name="export_preset">导出预设</string>
     <string name="import_preset">导入预设</string>
     <string name="save_preset">保存预设</string>
@@ -134,12 +176,8 @@
     <string name="default_preset_name">未命名</string>
     <string name="preset_export_success">预设导出成功</string>
     <string name="preset_export_failed">预设导出失败: %1$s</string>
-    <string name="package_export_success">图包导出成功</string>
-    <string name="package_export_failed">图包导出失败: %1$s</string>
     <string name="preset_import_success">预设导入成功</string>
     <string name="preset_import_failed">预设导入失败: %1$s</string>
-    <string name="package_import_success">图包 "%1$s" 导入成功</string>
-    <string name="package_import_failed">图包导入失败: %1$s</string>
     <string name="preset_save_success">预设保存成功</string>
     <string name="preset_save_failed">预设保存失败: %1$s</string>
     <string name="preset_delete_confirm">确定要删除预设 "%1$s" 吗?</string>
@@ -152,20 +190,21 @@
     <string name="preset_name_exists_message">预设 "%1$s" 已存在，请选择操作</string>
     <string name="overwrite">覆盖</string>
     <string name="create_new_preset">创建</string>
-    <string name="preset_name_required">请输入预设名称</string>
     <string name="preset_file_corrupted">预设文件损坏</string>
     <string name="preset_imported">预设已导入</string>
-    <string name="preset_deleted">预设已删除</string>
     <string name="preset_already_exists">预设已存在</string>
     <string name="preset_overwrite_confirm">已存在名为"%1$s"的预设，是否覆盖？</string>
     <string name="preset_overwrite_success">预设已覆盖并加载</string>
     <string name="preset_overwrite_failed">覆盖预设失败: %1$s</string>
     <string name="preset_already_loaded">预设已存在，已加载现有预设</string>
-    <string name="move_position">调整位置</string>
-    <string name="move_to_first">左置</string>
-    <string name="move_to_last">右置</string>
-    <string name="move_left">左移</string>
-    <string name="move_right">右移</string>
+    <string name="preset_loaded_toast">预设已加载</string>
+    <string name="preset_applying">正在应用预设 "%1$s"...</string>
+    <string name="preset_importing">正在导入预设...</string>
+    <string name="preset_exporting">正在导出预设...</string>
+    <string name="preset_saving">正在保存预设...</string>
+    <string name="preset_apply_failed_toast">应用预设失败: %1$s</string>
+
+    <!-- ==================== 草稿 ==================== -->
     <string name="restore_draft">恢复草稿</string>
     <string name="draft_found_message">发现未保存的草稿，是否恢复？</string>
     <string name="draft_title_label">标题: %1$s</string>
@@ -174,26 +213,8 @@
     <string name="discard">放弃</string>
     <string name="draft_restored">草稿已恢复</string>
     <string name="draft_restore_failed">恢复草稿失败</string>
-    <string name="loading_resources">加载中...</string>
-    <string name="images_added">已添加 %1$d 张图片</string>
-    <string name="images_cleared">已清理 %1$d 张导入图片</string>
-    <string name="tier_list_suffix">梯度表</string>
-    <string name="follow_system_theme">默认主题</string>
-    <string name="disable_custom_font">禁用字体</string>
-    <string name="select_badge_slot">选择要设置的小图标位置</string>
-    <string name="badge_slot_label">小图标%1$d %2$s</string>
-    <string name="add_badge">添加小图标</string>
-    <string name="click_badge_to_set">点击小图标设置到选中的位置</string>
-    <string name="no_badges_available">暂无可用小图标，请先添加</string>
-    <string name="badge_added">小图标已添加</string>
-    <string name="badge_add_failed">添加小图标失败: %1$s</string>
-    <string name="select_import_target">选择导入位置</string>
-    <string name="import_to_pending">待分级图片</string>
-    <string name="import_to_badges">角色小图标</string>
-    <string name="import_target_description">请选择将图包导入到哪个区域</string>
-    <string name="import_target_message">图包 "%1$s" 包含 %2$d 张图片，请选择导入位置</string>
-    <string name="confirm_delete">确认删除</string>
-    <string name="confirm_delete_message">确定要删除 "%1$s" 吗?</string>
+
+    <!-- ==================== 资源管理 ==================== -->
     <string name="resource_management">资源管理</string>
     <string name="cache_size">缓存大小</string>
     <string name="work_images_size">工作目录大小</string>
@@ -208,28 +229,14 @@
     <string name="packages_and_presets_kept">导入的图包和预设文件将保留</string>
     <string name="cleanup_warning">此操作不可恢复，是否继续？</string>
     <string name="cleanup_button">清理数据</string>
-    <string name="calculating">计算中...</string>
     <string name="preset_files">预设文件</string>
     <string name="kept_note">（保留）</string>
     <string name="cleanable_total">可清理</string>
     <string name="all_data_cleaned">已清理所有数据</string>
-    <string name="preset_applying">正在应用预设 "%1$s"...</string>
-    <string name="preset_importing">正在导入预设...</string>
-    <string name="preset_exporting">正在导出预设...</string>
-    <string name="preset_saving">正在保存预设...</string>
-    <string name="saving_chart">正在保存图表...</string>
-    <string name="sharing_chart">正在生成分享...</string>
-    <string name="badges_added">成功添加 %1$d 个小图标</string>
-    <string name="badges_add_failed_partial">%1$d 个小图标添加失败</string>
-    <string name="badge_deleted">小图标已删除</string>
-    <string name="badge_delete_failed">删除小图标失败</string>
-    <string name="badge_in_use">小图标正在使用</string>
-    <string name="badge_in_use_message">该小图标正在被图片引用,无法删除</string>
-    <string name="share_log_failed">分享日志失败: %1$s</string>
-    <string name="apply_to_all">复用</string>
-    <string name="apply_to_all_success">已复用到 %1$d 张图片</string>
+    <string name="confirm_delete">确认删除</string>
+    <string name="confirm_delete_message">确定要删除 "%1$s" 吗?</string>
 
-    <!-- 视频生成相关字符串 -->
+    <!-- ==================== 视频生成 ==================== -->
     <string name="video_generation">视频生成</string>
     <string name="video_generation_settings">视频生成设置</string>
     <string name="action_order">动作顺序</string>
@@ -239,14 +246,14 @@
     <string name="action_place">图片放置</string>
     <string name="action_name">图片命名</string>
     <string name="action_badge">小图标添加</string>
-    <string name="granularity_per_image">按放置顺序</string>
+    <string name="granularity_per_image">按图片顺序</string>
     <string name="granularity_per_type">按层级顺序</string>
     <string name="interval_source_fixed">手动固定时长</string>
     <string name="interval_source_audio_duration">音频时长</string>
     <string name="image_interval">图片间隔</string>
     <string name="badge_interval">图标间隔</string>
     <string name="name_display">命名显示</string>
-    <string name="name_display_once">一次性显示</string>
+    <string name="name_display_once">立即显示</string>
     <string name="name_display_per_char">逐字显示</string>
     <string name="name_char_interval">逐字间隔</string>
     <string name="cross_type_pause">跨类型停顿</string>
@@ -266,12 +273,12 @@
     <string name="sfx_volume">动作音效音量</string>
     <string name="bgm_volume">背景音乐音量</string>
     <string name="seconds_unit">%1$.1f 秒</string>
-    <string name="image_audio">解说音频</string>
-    <string name="upload_audio">添加解说</string>
-    <string name="audio_format_hint">支持 MP3 / WAV / M4A</string>
+    <string name="audio_add_failed">音频添加失败</string>
     <string name="audio_added">音频已添加</string>
     <string name="audio_removed">音频已移除</string>
+    <string name="audio_format_hint">支持 MP3 / WAV / M4A</string>
     <string name="no_audio">暂无音频</string>
+    <string name="upload_audio">添加解说</string>
     <string name="preview_video">预览视频</string>
     <string name="export_video">导出视频</string>
     <string name="video_preview_not_ready">视频预览尚未实现</string>
@@ -280,12 +287,22 @@
     <string name="preview_loading">正在生成预览 %1$d%%</string>
     <string name="pause">暂停</string>
     <string name="play">播放</string>
-    <string name="close">关闭</string>
     <string name="exporting_video">正在导出视频</string>
     <string name="export_progress">渲染 %1$d / %2$d 帧</string>
     <string name="export_success">视频导出成功</string>
     <string name="export_failed">视频导出失败: %1$s</string>
     <string name="video_saved">视频已保存到 %1$s</string>
-    <string name="share_video">分享视频</string>
     <string name="cancel_export">取消导出</string>
+
+    <!-- ==================== 使用说明与捐赠 ==================== -->
+    <string name="instructions">使用说明</string>
+    <string name="donate">捐赠打赏</string>
+    <string name="donate_thanks">感谢您的支持！</string>
+    <string name="donate_alipay">支付宝</string>
+    <string name="donate_no_app">未找到可用的支付应用</string>
+    <string name="instructions_content">【添加图片】\n• 从相册添加：点击待分级区域的"添加"按钮，从相册选择图片\n• 图包管理：点击右上角菜单 → "图包管理"，导入本地ZIP图包（支持密码保护）\n• 导入位置：导入图包时可选择"待分级图片"或"角色小图标"区域\n\n【待分级区域操作】\n• 左右滑动：浏览待分级区域的图片\n• 向下拖动：将图片拖到目标层级后松手即可放入该层级\n• 向上拖动删除：向上拖出待分级区域（图片变红）后松手删除\n• 添加/清空：点击"添加"从相册导入，点击"清空"删除全部待分级图片\n\n【层级操作】\n• 编辑名称：单击层级左侧色块，输入新名称后确认\n• 修改颜色：双击层级左侧色块，选择预设颜色或输入十六进制色值\n• 删除层级：向右滑动层级，变红后松手即可删除\n• 添加层级：点击底部"+"号按钮\n• 层级排序：长按并上下拖动层级左侧色块调整顺序\n\n【层级内图片操作】\n• 单击：打开图片操作菜单（查看/裁切/移动/替换/命名/小图标/解说音频）\n• 双击：选中图片（蓝色边框），再双击另一张可交换位置（支持跨层级）\n• 垂直拖动：上下拖动图片可在不同层级间移动，或拖回待分级区域\n• 向上拖动删除：向上拖出区域（图片变红）后松手删除\n\n【图片操作菜单】\n• 查看：查看大图及分辨率信息\n• 裁切：按1:1或3:4比例裁切，或自定义像素尺寸\n• 移动：将图片移动到其他层级，或使用"左置/右置/左移/右移"微调位置\n• 替换：选择新图片替换当前图片\n• 命名：为图片添加名称，显示在图片底部或下方\n• 小图标：为图片添加最多3个小图标，可选择内置或已导入的小图标\n• 解说音频：为单张图片添加MP3/WAV/M4A格式的解说音频\n\n【小图标】\n• 入口：在图片操作菜单中选择"小图标"\n• 数量：每张图片最多可添加3个小图标\n• 显示位置：默认在图片右上角；在程序设置开启"外置小图"后显示在图片右侧\n• 来源：可从已导入的小图标列表选择，或把图包导入到"角色小图标"区域\n• 删除：点击小图标右侧的删除按钮移除\n\n【视频生成】\n• 入口：点击顶部工具栏的"视频生成"图标\n• 动作顺序：调整"图片放置/图片命名/小图标添加"的播放顺序\n• 播放顺序：按图片顺序或按层级顺序播放\n• 间隔设置：手动固定每张图片时长，或按关联音频时长自动计算\n• 音频叠加：可将图片解说音频作为背景解说，选择保留/替换动作音效\n• 背景音乐：可添加背景音乐，并设置解说与背景音乐的播放顺序和音量\n• 预览/导出：配置完成后可预览视频，或导出为MP4文件\n\n【管理预设】\n点击右上角菜单 → "管理预设"：\n• 保存预设：将当前梯度表配置保存为预设\n• 导入预设：选择.tdds格式预设文件导入\n• 导出预设：将当前配置导出为.tdds文件分享\n• 应用/删除：在预设列表中应用或删除已保存的预设\n• 覆盖提示：导入已存在的预设时可选择覆盖或创建新预设\n\n【草稿自动保存】\n• 自动保存：应用在后台自动保存当前编辑状态\n• 恢复提示：重新打开应用时，如发现未保存草稿会提示恢复\n• 触发时机：按Home键、切换到其他应用或退出时会触发草稿保存\n\n【其他功能】\n• 修改标题：点击顶部标题修改梯度表名称\n• 修改作者：点击"制表:作者名"修改作者名称\n• 保存：点击底部"保存"按钮，预览后保存到相册\n• 分享：在预览界面点击"分享"分享图片\n• 重置：点击底部"重置"按钮恢复默认模板\n• 主题切换：点击顶部太阳/月亮图标切换浅色/深色主题\n• 功能菜单：点击顶部齿轮图标，包含图包管理、管理预设、程序设置、使用说明、支持作者、开源许可\n• 资源管理：点击顶部文件夹图标，查看缓存和工作目录大小，并可清理缓存\n\n【程序设置】\n点击右上角菜单 → "程序设置"：\n• 更改语言：切换界面显示语言\n• 默认主题：开启后跟随系统自动切换浅色/深色模式\n• 禁用字体：使用系统默认字体，禁用自定义字体\n• 禁用加添：开启后，点击图片不会直接添加到层级\n• 外置小图：开启后，小图标显示在图片右侧\n• 下置命名：开启后，图片名称显示在图片下方\n• 调节浮显：调整拖动图片时浮动预览的位置偏移</string>
+
+    <!-- ==================== 开源许可 ==================== -->
+    <string name="open_source_licenses">开源许可</string>
+
 </resources>

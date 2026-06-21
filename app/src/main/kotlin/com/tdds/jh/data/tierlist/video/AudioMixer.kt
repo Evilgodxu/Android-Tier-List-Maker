@@ -11,7 +11,7 @@ import java.io.File
 /**
  * 音频合成引擎
  *
- * 将解说音频、背景音乐、动作音效按时间线混音为单条 AAC 音轨。
+ * 将解说音频按时间线混音为单条 AAC 音轨。
  */
 class AudioMixer(private val context: Context) {
 
